@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raíz Repostería - Registro e Inicio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { crema: '#fef5d4', azulBtn: '#2b88ff' } }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #fef5d4; font-family: sans-serif; color: #111; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="p-4 border-b border-gray-300 flex items-center">
+        <i class="ph ph-dots-three text-2xl font-bold"></i>
+    </header>
+
+    <div class="flex-1 flex flex-col items-center justify-center p-6">
+        <h1 id="auth-title" class="text-4xl font-bold mb-2">Crear Cuenta</h1>
+        <p class="mb-8 text-gray-700">
+            <span id="auth-subtitle">¿Ya tienes cuenta?</span> 
+            <button onclick="cambiarModo()" id="btn-toggle" class="text-azulBtn font-bold underline">Inicia Sesión</button>
+        </p>
+
+        <form id="auth-form" onsubmit="handleAuth(event)" class="w-full max-w-sm flex flex-col gap-4">
+            
+            <div id="field-nombre" class="flex flex-col gap-1">
+                <label class="text-xs font-bold uppercase text-gray-500">Nombre Completo</label>
+                <input type="text" id="nombre" name="nombre" class="border border-gray-400 p-3 outline-none focus:border-black bg-white" required>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="text-xs font-bold uppercase text-gray-500">Correo Electrónico</label>
+                <input type="email" id="correo" name="correo" required class="border border-gray-400 p-3 outline-none focus:border-black bg-white">
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="text-xs font-bold uppercase text-gray-500">Contraseña</label>
+                <input type="password" id="password" name="password" required class="border border-gray-400 p-3 outline-none focus:border-black bg-white">
+            </div>
+
+            <button type="submit" id="btn-submit" class="bg-azulBtn text-white font-bold py-4 shadow-lg hover:bg-blue-700 transition-colors uppercase tracking-widest mt-4">
+                Crear Cuenta
+            </button>
+        </form>
+    </div>
+
+    <script>
+        let isLoginMode = false;
+
+        function cambiarModo() {
+            isLoginMode = !isLoginMode;
+            const titulo = document.getElementById('auth-title');
+            const subtitulo = document.getElementById('auth-subtitle');
+            const fieldNombre = document.getElementById('field-nombre');
+            const btnSubmit = document.getElementById('btn-submit');
+            const btnToggle = document.getElementById('btn-toggle');
+
+            if (isLoginMode) {
+                titulo.innerText = "Iniciar Sesión";
+                subtitulo.innerText = "¿No tienes cuenta?";
+                btnToggle.innerText = "Regístrate";
+                fieldNombre.style.display = "none";
+                document.getElementById('nombre').removeAttribute('required');
+                btnSubmit.innerText = "Entrar";
+            } else {
+                titulo.innerText = "Crear Cuenta";
+                subtitulo.innerText = "¿Ya tienes cuenta?";
+                btnToggle.innerText = "Inicia Sesión";
+                fieldNombre.style.display = "flex";
+                document.getElementById('nombre').setAttribute('required', 'true');
+                btnSubmit.innerText = "Crear Cuenta";
+            }
+        }
+
+        // LÓGICA LOCAL SIN PHP
+        function handleAuth(event) {
+            event.preventDefault();
+            
+            const nombre = document.getElementById('nombre').value;
+            const correo = document.getElementById('correo').value;
+            const password = document.getElementById('password').value;
+
+            // Obtener lista de usuarios registrados o crear una vacía si no existe
+            let usuarios = JSON.parse(localStorage.getItem('raiz_usuarios')) || [];
+
+            if (isLoginMode) {
+                // Modo Iniciar Sesión
+                const usuarioEncontrado = usuarios.find(u => u.correo === correo && u.password === password);
+                
+                if (usuarioEncontrado) {
+                    localStorage.setItem('usuario_logueado', JSON.stringify({ 
+                        nombre: usuarioEncontrado.nombre, 
+                        correo: usuarioEncontrado.correo 
+                    }));
+                    window.location.href = "productos.html";
+                } else {
+                    alert("Correo o contraseña incorrectos.");
+                }
+            } else {
+                // Modo Registro
+                const existe = usuarios.some(u => u.correo === correo);
+                if (existe) {
+                    alert("Este correo ya está registrado.");
+                    return;
+                }
+
+                // Guardar nuevo usuario
+                const nuevoUsuario = { nombre, correo, password };
+                usuarios.push(nuevoUsuario);
+                localStorage.setItem('raiz_usuarios', JSON.stringify(usuarios));
+
+                // Iniciar sesión automáticamente
+                localStorage.setItem('usuario_logueado', JSON.stringify({ nombre, correo }));
+                alert("¡Cuenta creada con éxito!");
+                window.location.href = "productos.html";
+            }
+        }
+    </script>
+</body>
+</html>

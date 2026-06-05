@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel - Raíz Repostería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { crema: '#fef5d4', verdeLike: '#9bf08b', rojoDislike: '#ff7b7b', azulBtn: '#2b88ff' } } } }
+    </script>
+    <style>
+        body { background-color: #fef5d4; font-family: sans-serif; color: #111; }
+        .product-card, .neo-box { border: 2px solid black; }
+        .product-card { transition: transform 0.2s; }
+        .product-card:hover { transform: translateY(-5px); }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); }
+        
+        .sidebar-btn-active {
+            background-color: #111111;
+            color: #fef5d4;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative overflow-x-hidden">
+
+    <button onclick="toggleSidebar()" class="fixed top-4 left-4 z-40 bg-white border-2 border-black p-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center hover:bg-gray-100 transition-colors">
+        <i class="ph ph-list text-2xl font-bold"></i>
+    </button>
+
+    <header class="p-4 border-b-2 border-black flex items-center justify-end bg-crema pr-6 pl-20 min-h-[76px]">
+        <div class="font-bold uppercase tracking-tighter italic text-xl mr-auto pl-2">Raíz Repostería</div>
+        <div class="flex items-center gap-2">
+            <span id="usuario-nombre" class="text-xs font-black uppercase text-gray-700 bg-white px-3 py-1.5 border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">Cargando...</span>
+        </div>
+    </header>
+
+    <aside id="sidebar-menu" class="fixed top-0 left-0 h-full w-72 bg-white border-r-2 border-black flex flex-col justify-between p-5 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out shadow-[10px_0px_0px_0px_rgba(0,0,0,0.15)]">
+        <div>
+            <div class="flex items-center justify-between py-2 border-b border-gray-300 mb-6">
+                <div class="font-bold uppercase tracking-tighter italic text-lg">Menú Panel</div>
+                <button onclick="toggleSidebar()" class="border border-black p-1.5 hover:bg-gray-100 flex items-center justify-center">
+                    <i class="ph ph-x text-lg font-bold"></i>
+                </button>
+            </div>
+            
+            <nav class="flex flex-col gap-2.5">
+                <button id="menu-inventario" onclick="cambiarSeccionPrincipal('inventario')" class="sidebar-btn-active w-full text-left font-bold uppercase text-xs p-3.5 border border-black hover:bg-gray-100 flex items-center gap-3 transition-colors">
+                    <i class="ph ph-storefront text-lg"></i> Nuestro Inventario
+                </button>
+                <button id="menu-pagos-qr" onclick="cambiarSeccionPrincipal('pagos-qr')" class="w-full text-left font-bold uppercase text-xs p-3.5 border border-black hover:bg-gray-100 flex items-center gap-3 transition-colors">
+                    <i class="ph ph-qr-code text-lg"></i> Pagos con QR
+                </button>
+                <button id="menu-historial" onclick="cambiarSeccionPrincipal('historial')" class="w-full text-left font-bold uppercase text-xs p-3.5 border border-black hover:bg-gray-100 flex items-center gap-3 transition-colors">
+                    <i class="ph ph-clock-counter-clockwise text-lg"></i> Historial de Pedidos
+                </button>
+            </nav>
+        </div>
+
+        <div class="border-t border-gray-300 pt-4 flex flex-col gap-2 text-center">
+            <button onclick="cerrarSesion()" class="bg-red-100 text-red-600 border border-red-400 font-bold text-[10px] py-3 uppercase hover:bg-red-200 transition-colors tracking-wider">
+                <i class="ph ph-sign-out"></i> Cerrar Sesión
+            </button>
+        </div>
+    </aside>
+
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0 transition-opacity duration-300"></div>
+
+    <main class="flex-1 p-6 md:p-10 max-w-5xl mx-auto w-full">
+        
+        <section id="seccion-inventario" class="block">
+            <h2 class="text-3xl font-bold mb-8 uppercase italic tracking-tight flex items-center gap-2">
+                <i class="ph ph-storefront"></i> Catálogo de Productos
+            </h2>
+            <div id="contenedor-productos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                </div>
+        </section>
+
+        <section id="seccion-pagos-qr" class="hidden">
+            <h2 class="text-3xl font-bold mb-8 uppercase italic tracking-tight flex items-center gap-2">
+                <i class="ph ph-qr-code"></i> Módulo de Pagos QR
+            </h2>
+            
+            <div class="bg-white p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-w-xl mx-auto">
+                <div class="flex border-b border-black mb-6">
+                    <button id="tab-mostrar-btn" onclick="cambiarTabQR('mostrar')" class="flex-1 py-2 font-bold uppercase text-xs border-t-2 border-x-2 border-black bg-crema">
+                        Mi Código QR
+                    </button>
+                    <button id="tab-escanear-btn" onclick="cambiarTabQR('escanear')" class="flex-1 py-2 font-bold uppercase text-xs border-b border-black hover:bg-gray-50">
+                        Escanear QR
+                    </button>
+                </div>
+
+                <div id="contenido-tab-mostrar" class="flex flex-col items-center justify-center p-4">
+                    <p class="text-center text-xs text-gray-600 mb-6 uppercase font-semibold">Muestra este código para recibir transferencias de saldo de Raíz Repostería</p>
+                    <div id="canvas-qrcode" class="p-4 bg-white border-2 border-black shadow-sm"></div>
+                </div>
+
+                <div id="contenido-tab-escanear" class="hidden flex flex-col items-center justify-center p-2">
+                    <p class="text-center text-xs text-gray-600 mb-4 uppercase font-semibold">Usa la cámara de tu celular para escanear códigos de pago</p>
+                    <div id="lector-qr" class="w-full max-w-sm overflow-hidden border-2 border-black bg-black rounded" style="min-height: 250px;"></div>
+                    <div class="flex gap-2 w-full max-w-sm mt-4">
+                        <button onclick="encenderCamara()" class="flex-1 bg-azulBtn text-white text-xs font-bold py-3 uppercase border border-black hover:opacity-90 shadow">
+                            Iniciar Cámara
+                        </button>
+                        <button onclick="apagarCamara()" class="flex-1 bg-gray-200 text-xs font-bold py-3 uppercase border border-black hover:bg-gray-300 shadow">
+                            Detener
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="seccion-historial" class="hidden">
+            <h2 class="text-3xl font-bold mb-8 uppercase italic tracking-tight flex items-center gap-2">
+                <i class="ph ph-clock-counter-clockwise"></i> Mi Historial de Pedidos
+            </h2>
+            <div class="bg-white p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-w-2xl mx-auto">
+                <p class="text-xs font-bold uppercase text-gray-500 mb-4 tracking-wider">Registro histórico en tiempo real:</p>
+                <div id="contenedor-historial" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                    </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-entrega" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-black p-6 w-full max-w-md shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <h3 class="text-2xl font-bold mb-4 uppercase italic">Detalles de Entrega</h3>
+            <p id="producto-seleccionado" class="mb-4 text-sm font-semibold text-gray-600 uppercase tracking-wider"></p>
+            <form id="form-entrega" onsubmit="finalizarCompra(event)">
+                <input type="hidden" id="id-producto-comprar">
+                <div class="mb-4">
+                    <label class="block text-xs font-black uppercase mb-1">Dirección Completa</label>
+                    <input type="text" id="direccion-entrega" required class="w-full border-2 border-black p-3 outline-none focus:bg-crema" placeholder="Calle, número, colonia...">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-xs font-black uppercase mb-1">Referencias</label>
+                    <textarea id="referencias-entrega" class="w-full border-2 border-black p-3 outline-none focus:bg-crema h-24" placeholder="Ej. Casa color azul..."></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="cerrarModal()" class="flex-1 border-2 border-black py-3 font-bold hover:bg-gray-100 uppercase text-xs">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-verdeLike border-2 border-black py-3 font-bold hover:opacity-90 uppercase text-xs">Confirmar Pedido</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-dislike" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white border-2 border-black p-6 w-full max-w-md shadow-[8px_8px_0px_0px_rgba(255,123,123,1)]">
+            <h3 class="text-2xl font-bold mb-4 uppercase italic">¿Qué no te gustó?</h3>
+            <p class="text-xs mb-4 text-gray-500 uppercase font-bold">Solo puedes opinar si ya has comprado este producto.</p>
+            <form id="form-dislike" onsubmit="enviarDislike(event)">
+                <input type="hidden" id="id-producto-dislike">
+                <div class="mb-6">
+                    <textarea id="motivo-dislike" required class="w-full border-2 border-black p-3 outline-none focus:bg-crema h-32" placeholder="Cuéntanos por qué no te gustó el producto..."></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="cerrarModalDislike()" class="flex-1 border-2 border-black py-3 font-bold hover:bg-gray-100 uppercase text-xs">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-rojoDislike border-2 border-black py-3 font-bold hover:opacity-90 uppercase text-xs">Enviar Feedback</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t-2 border-black p-6 text-center text-xs font-bold uppercase mt-auto">
+        © 2026 Raíz Repostería
+    </footer>
+
+    <script>
+        const productosIniciales = [
+            { id: 1, nombre: "Pastel de Chocolate", descripcion: "Delicioso pastel de chocolate amargo con capas de fudge artesanal.", stock: 10, ventas: 3, imagen: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500" },
+            { id: 2, nombre: "Cheesecake de Fresa", descripcion: "Cremoso cheesecake estilo Nueva York cubierto con mermelada casera de fresas.", stock: 5, ventas: 12, imagen: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500" },
+            { id: 3, nombre: "Tarta de Limón", descripcion: "Tarta crujiente rellena de crema ácida de limón y un merengue italiano perfecto.", stock: 8, ventas: 0, imagen: "https://images.unsplash.com/photo-1519869325930-281384150729?w=500" }
+        ];
+
+        let html5QrcodeScanner = null;
+        let sidebarAbierto = false;
+
+        window.onload = function() {
+            const usuario = JSON.parse(localStorage.getItem('usuario_logueado'));
+            if (!usuario) { window.location.href = "index.html"; return; }
+            document.getElementById('usuario-nombre').innerText = "Hola, " + usuario.nombre;
+            
+            if (!localStorage.getItem('raiz_productos')) { localStorage.setItem('raiz_productos', JSON.stringify(productosIniciales)); }
+            if (!localStorage.getItem('raiz_compras')) { localStorage.setItem('raiz_compras', JSON.stringify([])); }
+            if (!localStorage.getItem('raiz_dislikes')) { localStorage.setItem('raiz_dislikes', JSON.stringify([])); }
+
+            cargarProductos();
+            generarMiCodigoQR(usuario.correo);
+            cargarHistorialPedidos();
+        };
+
+        // --- CONTROL DE APERTURA/CIERRE DE BARRA LATERAL ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebarAbierto = !sidebarAbierto;
+
+            if (sidebarAbierto) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.add('opacity-100'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('opacity-100');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        function cambiarSeccionPrincipal(seccion) {
+            const secInventario = document.getElementById('seccion-inventario');
+            const secPagosQr = document.getElementById('seccion-pagos-qr');
+            const secHistorial = document.getElementById('seccion-historial');
+
+            const menuInventario = document.getElementById('menu-inventario');
+            const menuPagosQr = document.getElementById('menu-pagos-qr');
+            const menuHistorial = document.getElementById('menu-historial');
+
+            apagarCamara();
+            
+            // Cerrar automáticamente la barra lateral para dejar ver el contenido seleccionado
+            toggleSidebar();
+
+            secInventario.classList.add('hidden');
+            secPagosQr.classList.add('hidden');
+            secHistorial.classList.add('hidden');
+
+            menuInventario.className = menuInventario.className.replace('sidebar-btn-active', '').trim();
+            menuPagosQr.className = menuPagosQr.className.replace('sidebar-btn-active', '').trim();
+            menuHistorial.className = menuHistorial.className.replace('sidebar-btn-active', '').trim();
+
+            if (seccion === 'inventario') {
+                secInventario.classList.remove('hidden');
+                menuInventario.classList.add('sidebar-btn-active');
+            } else if (seccion === 'pagos-qr') {
+                secPagosQr.classList.remove('hidden');
+                menuPagosQr.classList.add('sidebar-btn-active');
+            } else if (seccion === 'historial') {
+                secHistorial.classList.remove('hidden');
+                menuHistorial.classList.add('sidebar-btn-active');
+                cargarHistorialPedidos();
+            }
+        }
+
+        // --- Lógica del Catálogo de Inventario ---
+        function cargarProductos() {
+            const productos = JSON.parse(localStorage.getItem('raiz_productos')) || [];
+            const contenedor = document.getElementById('contenedor-productos');
+            contenedor.innerHTML = '';
+
+            productos.forEach(p => {
+                contenedor.innerHTML += `
+                    <div class="product-card bg-white p-4 flex flex-col border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <img src="${p.imagen}" class="w-full h-48 object-cover border-b-2 border-black mb-4">
+                        <h3 class="text-xl font-bold uppercase">${p.nombre}</h3>
+                        <p class="text-gray-600 text-sm mb-4 flex-grow">${p.descripcion}</p>
+                        <div class="border-t border-black pt-4 mt-auto">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-xs font-black uppercase">Stock: ${p.stock}</span>
+                                <span class="text-xs font-black text-blue-600 uppercase">Ventas: ${p.ventas || 0}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                ${p.stock > 0 ? 
+                                    `<button onclick="abrirModal(${p.id}, '${p.nombre}')" class="flex-1 bg-verdeLike border border-black py-2 font-bold hover:bg-green-400 text-xs uppercase tracking-wider">COMPRAR</button>` : 
+                                    `<button class="flex-1 bg-gray-300 border border-black py-2 font-bold cursor-not-allowed text-xs uppercase tracking-wider" disabled>AGOTADO</button>`
+                                }
+                                <button onclick="abrirModalDislike(${p.id})" class="w-12 bg-rojoDislike border border-black py-2 font-bold hover:bg-red-500 text-xl">👎</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- Lógica de Historial de Pedidos ---
+        function cargarHistorialPedidos() {
+            const compras = JSON.parse(localStorage.getItem('raiz_compras')) || [];
+            const productos = JSON.parse(localStorage.getItem('raiz_productos')) || [];
+            const contenedor = document.getElementById('contenedor-historial');
+            contenedor.innerHTML = '';
+
+            const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
+            const misCompras = compras.filter(c => c.correoUsuario === usuarioSesion.correo).reverse();
+
+            if (misCompras.length === 0) {
+                contenedor.innerHTML = '<p class="text-center text-xs text-gray-500 uppercase font-bold py-8">Aún no tienes pedidos registrados.</p>';
+                return;
+            }
+
+            misCompras.forEach(c => {
+                const prod = productos.find(p => p.id === c.idProducto);
+                const nombreProducto = prod ? prod.nombre : (c.detalleEspecial || "Producto Desconocido");
+                const metodoPagoBadge = c.metodo === "QR" 
+                    ? `<span class="bg-purple-100 text-purple-800 border border-purple-400 text-[10px] font-black uppercase px-2 py-0.5">Pago QR</span>`
+                    : `<span class="bg-blue-100 text-blue-800 border border-blue-400 text-[10px] font-black uppercase px-2 py-0.5">Envío Estándar</span>`;
+
+                contenedor.innerHTML += `
+                    <div class="border-2 border-black p-3 bg-gray-50 flex flex-col gap-1 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold uppercase text-sm">${nombreProducto}</h4>
+                            ${metodoPagoBadge}
+                        </div>
+                        <p class="text-xs text-gray-700"><strong>Dirección:</strong> ${c.direccion}</p>
+                        <div class="flex justify-between items-center text-[11px] text-gray-500 font-bold uppercase mt-1 pt-1 border-t border-dashed border-gray-300">
+                            <span><i class="ph ph-calendar"></i> ${c.fecha}</span>
+                            <span><i class="ph ph-clock"></i> ${c.hora}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- Modales e Interacciones de Compra ---
+        function abrirModal(id, nombre) {
+            document.getElementById('id-producto-comprar').value = id;
+            document.getElementById('producto-seleccionado').innerText = "Producto: " + nombre;
+            document.getElementById('modal-entrega').classList.remove('hidden');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-entrega').classList.add('hidden');
+            document.getElementById('form-entrega').reset();
+        }
+
+        function finalizarCompra(event) {
+            event.preventDefault();
+            const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
+            const idProducto = parseInt(document.getElementById('id-producto-comprar').value);
+            const direccion = document.getElementById('direccion-entrega').value;
+
+            let productos = JSON.parse(localStorage.getItem('raiz_productos'));
+            let compras = JSON.parse(localStorage.getItem('raiz_compras'));
+            const index = productos.findIndex(p => p.id === idProducto);
+            
+            if (index !== -1 && productos[index].stock > 0) {
+                productos[index].stock -= 1;
+                productos[index].ventas += 1;
+                const ahora = new Date();
+
+                compras.push({
+                    correoUsuario: usuarioSesion.correo,
+                    idProducto: idProducto,
+                    direccion: direccion,
+                    metodo: "Estandar",
+                    fecha: ahora.toLocaleDateString('es-MX'),
+                    hora: ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                });
+
+                localStorage.setItem('raiz_productos', JSON.stringify(productos));
+                localStorage.setItem('raiz_compras', JSON.stringify(compras));
+
+                alert("¡Compra exitosa! Tu pedido está en camino.");
+                cerrarModal();
+                cargarProductos();
+            }
+        }
+
+        // --- Gestión QR ---
+        function cambiarTabQR(tab) {
+            const btnMostrar = document.getElementById('tab-mostrar-btn');
+            const btnEscanear = document.getElementById('tab-escanear-btn');
+            const divMostrar = document.getElementById('contenido-tab-mostrar');
+            const divEscanear = document.getElementById('contenido-tab-escanear');
+
+            if (tab === 'mostrar') {
+                btnMostrar.className = "flex-1 py-2 font-bold uppercase text-xs border-t-2 border-x-2 border-black bg-crema";
+                btnEscanear.className = "flex-1 py-2 font-bold uppercase text-xs border-b border-black hover:bg-gray-50";
+                divMostrar.classList.remove('hidden');
+                divEscanear.classList.add('hidden');
+                apagarCamara();
+            } else {
+                btnEscanear.className = "flex-1 py-2 font-bold uppercase text-xs border-t-2 border-x-2 border-black bg-crema";
+                btnMostrar.className = "flex-1 py-2 font-bold uppercase text-xs border-b border-black hover:bg-gray-50";
+                divEscanear.classList.remove('hidden');
+                divMostrar.classList.add('hidden');
+            }
+        }
+
+        function generarMiCodigoQR(correoUsuario) {
+            document.getElementById("canvas-qrcode").innerHTML = "";
+            const datosQR = JSON.stringify({ empresa: "Raiz Repostería", tipoAccion: "pago_rapido", identificador: correoUsuario });
+            new QRCode(document.getElementById("canvas-qrcode"), { text: datosQR, width: 160, height: 160, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
+        }
+
+        function encenderCamara() {
+            if (html5QrcodeScanner === null) { html5QrcodeScanner = new Html5Qrcode("lector-qr"); }
+            const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure).catch(err => {
+                alert("No se pudo acceder a la cámara.");
+            });
+        }
+
+        function apagarCamara() {
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) { html5QrcodeScanner.stop().catch(err => console.error(err)); }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            apagarCamara();
+            const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
+            let compras = JSON.parse(localStorage.getItem('raiz_compras')) || [];
+            const ahora = new Date();
+
+            compras.push({
+                correoUsuario: usuarioSesion.correo,
+                idProducto: null,
+                detalleEspecial: "QR: " + decodedText,
+                direccion: "Procesado mediante Escáner Móvil",
+                metodo: "QR",
+                fecha: ahora.toLocaleDateString('es-MX'),
+                hora: ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            });
+
+            localStorage.setItem('raiz_compras', JSON.stringify(compras));
+            alert("¡Código QR Escaneado!\nRegistro guardado.");
+        }
+
+        function onScanFailure(error) {}
+
+        // --- Feedback / Dislike ---
+        function abrirModalDislike(id) {
+            document.getElementById('id-producto-dislike').value = id;
+            document.getElementById('modal-dislike').classList.remove('hidden');
+        }
+
+        function cerrarModalDislike() {
+            document.getElementById('modal-dislike').classList.add('hidden');
+            document.getElementById('form-dislike').reset();
+        }
+
+        function enviarDislike(event) {
+            event.preventDefault();
+            const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
+            const idProducto = parseInt(document.getElementById('id-producto-dislike').value);
+            const motivo = document.getElementById('motivo-dislike').value;
+            const compras = JSON.parse(localStorage.getItem('raiz_compras')) || [];
+            const dislikes = JSON.parse(localStorage.getItem('raiz_dislikes')) || [];
+
+            if (!compras.some(c => c.correoUsuario === usuarioSesion.correo && c.idProducto === idProducto)) {
+                alert("No puedes enviar feedback si no has comprado este producto anteriormente.");
+                return;
+            }
+
+            dislikes.push({ correoUsuario: usuarioSesion.correo, idProducto: idProducto, motivo: motivo });
+            localStorage.setItem('raiz_dislikes', JSON.stringify(dislikes));
+            alert("Feedback enviado.");
+            cerrarModalDislike();
+        }
+
+        function cerrarSesion() {
+            apagarCamara();
+            localStorage.removeItem('usuario_logueado');
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>
