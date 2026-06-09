@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
         tailwind.config = { theme: { extend: { colors: { crema: '#fef5d4', verdeLike: '#9bf08b', rojoDislike: '#ff7b7b', azulBtn: '#2b88ff' } } } }
     </script>
@@ -51,10 +50,7 @@
                     <i class="ph ph-storefront text-lg"></i> Nuestro Inventario
                 </button>
                 <button id="menu-pagos-qr" onclick="cambiarSeccionPrincipal('pagos-qr')" class="w-full text-left font-bold uppercase text-xs p-3.5 border border-black hover:bg-gray-100 flex items-center gap-3 transition-colors">
-                    <i class="ph ph-qr-code text-lg"></i> Pagos con QR
-                </button>
-                <button id="menu-historial" onclick="cambiarSeccionPrincipal('historial')" class="w-full text-left font-bold uppercase text-xs p-3.5 border border-black hover:bg-gray-100 flex items-center gap-3 transition-colors">
-                    <i class="ph ph-clock-counter-clockwise text-lg"></i> Historial de Pedidos
+                    <i class="ph ph-qr-code text-lg"></i> Acumular Puntos (QR)
                 </button>
             </nav>
         </div>
@@ -74,53 +70,25 @@
             <h2 class="text-3xl font-bold mb-8 uppercase italic tracking-tight flex items-center gap-2">
                 <i class="ph ph-storefront"></i> Catálogo de Productos
             </h2>
-            <div id="contenedor-productos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                </div>
+            <div id="contenedor-productos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </section>
 
         <section id="seccion-pagos-qr" class="hidden">
             <h2 class="text-3xl font-bold mb-8 uppercase italic tracking-tight flex items-center gap-2">
-                <i class="ph ph-qr-code"></i> Módulo de Pagos QR
+                <i class="ph ph-qr-code"></i> Canjear Puntos en la App
             </h2>
             
             <div class="bg-white p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-w-xl mx-auto">
-                <div class="flex border-b border-black mb-6">
-                    <button id="tab-mostrar-btn" onclick="cambiarTabQR('mostrar')" class="flex-1 py-2 font-bold uppercase text-xs border-t-2 border-x-2 border-black bg-crema">
-                        Mi Código QR
-                    </button>
-                    <button id="tab-escanear-btn" onclick="cambiarTabQR('escanear')" class="flex-1 py-2 font-bold uppercase text-xs border-b border-black hover:bg-gray-50">
-                        Escanear QR
-                    </button>
-                </div>
+                <div class="flex flex-col items-center justify-center p-4">
+                    <p class="text-center text-xs text-gray-600 mb-4 uppercase font-bold">Selecciona un producto para generar el código QR. ¡Escanéalo con la App móvil para acumular tus puntos!</p>
+                    
+                    <select id="select-producto-qr" onchange="actualizarQRDeProducto()" class="w-full max-w-xs border-2 border-black p-2.5 mb-6 outline-none bg-white font-bold text-xs uppercase"></select>
 
-                <div id="contenido-tab-mostrar" class="flex flex-col items-center justify-center p-4">
-                    <p class="text-center text-xs text-gray-600 mb-6 uppercase font-semibold">Muestra este código para recibir transferencias de saldo de Raíz Repostería</p>
-                    <div id="canvas-qrcode" class="p-4 bg-white border-2 border-black shadow-sm"></div>
-                </div>
-
-                <div id="contenido-tab-escanear" class="hidden flex flex-col items-center justify-center p-2">
-                    <p class="text-center text-xs text-gray-600 mb-4 uppercase font-semibold">Usa la cámara de tu celular para escanear códigos de pago</p>
-                    <div id="lector-qr" class="w-full max-w-sm overflow-hidden border-2 border-black bg-black rounded" style="min-height: 250px;"></div>
-                    <div class="flex gap-2 w-full max-w-sm mt-4">
-                        <button onclick="encenderCamara()" class="flex-1 bg-azulBtn text-white text-xs font-bold py-3 uppercase border border-black hover:opacity-90 shadow">
-                            Iniciar Cámara
-                        </button>
-                        <button onclick="apagarCamara()" class="flex-1 bg-gray-200 text-xs font-bold py-3 uppercase border border-black hover:bg-gray-300 shadow">
-                            Detener
-                        </button>
+                    <div class="p-4 bg-white border-2 border-black shadow-sm mb-2 flex items-center justify-center min-w-[212px] min-h-[212px]">
+                        <div id="canvas-qrcode"></div>
                     </div>
+                    <p id="info-qr-generado" class="text-[11px] font-bold uppercase text-blue-600 tracking-wider text-center mt-2"></p>
                 </div>
-            </div>
-        </section>
-
-        <section id="seccion-historial" class="hidden">
-            <h2 class="text-3xl font-bold mb-8 uppercase italic tracking-tight flex items-center gap-2">
-                <i class="ph ph-clock-counter-clockwise"></i> Mi Historial de Pedidos
-            </h2>
-            <div class="bg-white p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-w-2xl mx-auto">
-                <p class="text-xs font-bold uppercase text-gray-500 mb-4 tracking-wider">Registro histórico en tiempo real:</p>
-                <div id="contenedor-historial" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                    </div>
             </div>
         </section>
     </main>
@@ -150,7 +118,6 @@
     <div id="modal-dislike" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white border-2 border-black p-6 w-full max-w-md shadow-[8px_8px_0px_0px_rgba(255,123,123,1)]">
             <h3 class="text-2xl font-bold mb-4 uppercase italic">¿Qué no te gustó?</h3>
-            <p class="text-xs mb-4 text-gray-500 uppercase font-bold">Solo puedes opinar si ya has comprado este producto.</p>
             <form id="form-dislike" onsubmit="enviarDislike(event)">
                 <input type="hidden" id="id-producto-dislike">
                 <div class="mb-6">
@@ -175,7 +142,6 @@
             { id: 3, nombre: "Tarta de Limón", descripcion: "Tarta crujiente rellena de crema ácida de limón y un merengue italiano perfecto.", stock: 8, ventas: 0, imagen: "https://images.unsplash.com/photo-1519869325930-281384150729?w=500" }
         ];
 
-        let html5QrcodeScanner = null;
         let sidebarAbierto = false;
 
         window.onload = function() {
@@ -188,11 +154,13 @@
             if (!localStorage.getItem('raiz_dislikes')) { localStorage.setItem('raiz_dislikes', JSON.stringify([])); }
 
             cargarProductos();
-            generarMiCodigoQR(usuario.correo);
-            cargarHistorialPedidos();
+            poblarSelectorQR();
+            
+            setTimeout(() => {
+                actualizarQRDeProducto();
+            }, 300);
         };
 
-        // --- CONTROL DE APERTURA/CIERRE DE BARRA LATERAL ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar-menu');
             const overlay = document.getElementById('sidebar-overlay');
@@ -212,24 +180,16 @@
         function cambiarSeccionPrincipal(seccion) {
             const secInventario = document.getElementById('seccion-inventario');
             const secPagosQr = document.getElementById('seccion-pagos-qr');
-            const secHistorial = document.getElementById('seccion-historial');
-
             const menuInventario = document.getElementById('menu-inventario');
             const menuPagosQr = document.getElementById('menu-pagos-qr');
-            const menuHistorial = document.getElementById('menu-historial');
 
-            apagarCamara();
-            
-            // Cerrar automáticamente la barra lateral para dejar ver el contenido seleccionado
             toggleSidebar();
 
             secInventario.classList.add('hidden');
             secPagosQr.classList.add('hidden');
-            secHistorial.classList.add('hidden');
 
             menuInventario.className = menuInventario.className.replace('sidebar-btn-active', '').trim();
             menuPagosQr.className = menuPagosQr.className.replace('sidebar-btn-active', '').trim();
-            menuHistorial.className = menuHistorial.className.replace('sidebar-btn-active', '').trim();
 
             if (seccion === 'inventario') {
                 secInventario.classList.remove('hidden');
@@ -237,14 +197,10 @@
             } else if (seccion === 'pagos-qr') {
                 secPagosQr.classList.remove('hidden');
                 menuPagosQr.classList.add('sidebar-btn-active');
-            } else if (seccion === 'historial') {
-                secHistorial.classList.remove('hidden');
-                menuHistorial.classList.add('sidebar-btn-active');
-                cargarHistorialPedidos();
+                setTimeout(actualizarQRDeProducto, 50);
             }
         }
 
-        // --- Lógica del Catálogo de Inventario ---
         function cargarProductos() {
             const productos = JSON.parse(localStorage.getItem('raiz_productos')) || [];
             const contenedor = document.getElementById('contenedor-productos');
@@ -259,7 +215,6 @@
                         <div class="border-t border-black pt-4 mt-auto">
                             <div class="flex justify-between items-center mb-4">
                                 <span class="text-xs font-black uppercase">Stock: ${p.stock}</span>
-                                <span class="text-xs font-black text-blue-600 uppercase">Ventas: ${p.ventas || 0}</span>
                             </div>
                             <div class="flex gap-2">
                                 ${p.stock > 0 ? 
@@ -274,45 +229,6 @@
             });
         }
 
-        // --- Lógica de Historial de Pedidos ---
-        function cargarHistorialPedidos() {
-            const compras = JSON.parse(localStorage.getItem('raiz_compras')) || [];
-            const productos = JSON.parse(localStorage.getItem('raiz_productos')) || [];
-            const contenedor = document.getElementById('contenedor-historial');
-            contenedor.innerHTML = '';
-
-            const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
-            const misCompras = compras.filter(c => c.correoUsuario === usuarioSesion.correo).reverse();
-
-            if (misCompras.length === 0) {
-                contenedor.innerHTML = '<p class="text-center text-xs text-gray-500 uppercase font-bold py-8">Aún no tienes pedidos registrados.</p>';
-                return;
-            }
-
-            misCompras.forEach(c => {
-                const prod = productos.find(p => p.id === c.idProducto);
-                const nombreProducto = prod ? prod.nombre : (c.detalleEspecial || "Producto Desconocido");
-                const metodoPagoBadge = c.metodo === "QR" 
-                    ? `<span class="bg-purple-100 text-purple-800 border border-purple-400 text-[10px] font-black uppercase px-2 py-0.5">Pago QR</span>`
-                    : `<span class="bg-blue-100 text-blue-800 border border-blue-400 text-[10px] font-black uppercase px-2 py-0.5">Envío Estándar</span>`;
-
-                contenedor.innerHTML += `
-                    <div class="border-2 border-black p-3 bg-gray-50 flex flex-col gap-1 shadow-sm">
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-bold uppercase text-sm">${nombreProducto}</h4>
-                            ${metodoPagoBadge}
-                        </div>
-                        <p class="text-xs text-gray-700"><strong>Dirección:</strong> ${c.direccion}</p>
-                        <div class="flex justify-between items-center text-[11px] text-gray-500 font-bold uppercase mt-1 pt-1 border-t border-dashed border-gray-300">
-                            <span><i class="ph ph-calendar"></i> ${c.fecha}</span>
-                            <span><i class="ph ph-clock"></i> ${c.hora}</span>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        // --- Modales e Interacciones de Compra ---
         function abrirModal(id, nombre) {
             document.getElementById('id-producto-comprar').value = id;
             document.getElementById('producto-seleccionado').innerText = "Producto: " + nombre;
@@ -334,7 +250,13 @@
             let compras = JSON.parse(localStorage.getItem('raiz_compras'));
             const index = productos.findIndex(p => p.id === idProducto);
             
-            if (index !== -1 && productos[index].stock > 0) {
+            if (index !== -1) {
+                if (productos[index].stock <= 0) {
+                    alert("Lo sentimos, este producto se acaba de agotar.");
+                    cerrarModal();
+                    return;
+                }
+
                 productos[index].stock -= 1;
                 productos[index].ventas += 1;
                 const ahora = new Date();
@@ -343,9 +265,9 @@
                     correoUsuario: usuarioSesion.correo,
                     idProducto: idProducto,
                     direccion: direccion,
-                    metodo: "Estandar",
+                    metodo: "Estándar Web",
                     fecha: ahora.toLocaleDateString('es-MX'),
-                    hora: ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                    hora: ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
                 });
 
                 localStorage.setItem('raiz_productos', JSON.stringify(productos));
@@ -354,71 +276,65 @@
                 alert("¡Compra exitosa! Tu pedido está en camino.");
                 cerrarModal();
                 cargarProductos();
+                poblarSelectorQR();
             }
         }
 
-        // --- Gestión QR ---
-        function cambiarTabQR(tab) {
-            const btnMostrar = document.getElementById('tab-mostrar-btn');
-            const btnEscanear = document.getElementById('tab-escanear-btn');
-            const divMostrar = document.getElementById('contenido-tab-mostrar');
-            const divEscanear = document.getElementById('contenido-tab-escanear');
+        function poblarSelectorQR() {
+            const productos = JSON.parse(localStorage.getItem('raiz_productos')) || [];
+            const select = document.getElementById('select-producto-qr');
+            if(!select) return;
+            
+            select.innerHTML = '';
+            productos.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.innerText = `${p.nombre}`;
+                select.appendChild(option);
+            });
+        }
 
-            if (tab === 'mostrar') {
-                btnMostrar.className = "flex-1 py-2 font-bold uppercase text-xs border-t-2 border-x-2 border-black bg-crema";
-                btnEscanear.className = "flex-1 py-2 font-bold uppercase text-xs border-b border-black hover:bg-gray-50";
-                divMostrar.classList.remove('hidden');
-                divEscanear.classList.add('hidden');
-                apagarCamara();
-            } else {
-                btnEscanear.className = "flex-1 py-2 font-bold uppercase text-xs border-t-2 border-x-2 border-black bg-crema";
-                btnMostrar.className = "flex-1 py-2 font-bold uppercase text-xs border-b border-black hover:bg-gray-50";
-                divEscanear.classList.remove('hidden');
-                divMostrar.classList.add('hidden');
+        function actualizarQRDeProducto() {
+            const contenedorQR = document.getElementById("canvas-qrcode");
+            if (!contenedorQR) return;
+            
+            contenedorQR.innerHTML = "";
+            const select = document.getElementById('select-producto-qr');
+            const idSeleccionado = parseInt(select.value);
+            
+            if (!idSeleccionado) {
+                contenedorQR.innerText = "No hay productos.";
+                return;
+            }
+
+            const productos = JSON.parse(localStorage.getItem('raiz_productos')) || [];
+            const prod = productos.find(p => p.id === idSeleccionado);
+
+            if (prod) {
+                // MANTENEMOS TU FORMATO EXACTO JSON PARA QUE SEA COMPATIBLE
+                const datosQR = JSON.stringify({
+                    origen: "Raiz Repostería",
+                    accion: "compra_directa",
+                    idProducto: prod.id,
+                    nombreProducto: prod.nombre
+                });
+
+                try {
+                    new QRCode(contenedorQR, {
+                        text: datosQR,
+                        width: 180,
+                        height: 180,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+                    document.getElementById("info-qr-generado").innerText = `Código listo para: ${prod.nombre}`;
+                } catch(err) {
+                    console.error("Error QR:", err);
+                }
             }
         }
 
-        function generarMiCodigoQR(correoUsuario) {
-            document.getElementById("canvas-qrcode").innerHTML = "";
-            const datosQR = JSON.stringify({ empresa: "Raiz Repostería", tipoAccion: "pago_rapido", identificador: correoUsuario });
-            new QRCode(document.getElementById("canvas-qrcode"), { text: datosQR, width: 160, height: 160, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
-        }
-
-        function encenderCamara() {
-            if (html5QrcodeScanner === null) { html5QrcodeScanner = new Html5Qrcode("lector-qr"); }
-            const config = { fps: 10, qrbox: { width: 200, height: 200 } };
-            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure).catch(err => {
-                alert("No se pudo acceder a la cámara.");
-            });
-        }
-
-        function apagarCamara() {
-            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) { html5QrcodeScanner.stop().catch(err => console.error(err)); }
-        }
-
-        function onScanSuccess(decodedText, decodedResult) {
-            apagarCamara();
-            const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
-            let compras = JSON.parse(localStorage.getItem('raiz_compras')) || [];
-            const ahora = new Date();
-
-            compras.push({
-                correoUsuario: usuarioSesion.correo,
-                idProducto: null,
-                detalleEspecial: "QR: " + decodedText,
-                direccion: "Procesado mediante Escáner Móvil",
-                metodo: "QR",
-                fecha: ahora.toLocaleDateString('es-MX'),
-                hora: ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-            });
-
-            localStorage.setItem('raiz_compras', JSON.stringify(compras));
-            alert("¡Código QR Escaneado!\nRegistro guardado.");
-        }
-
-        function onScanFailure(error) {}
-
-        // --- Feedback / Dislike ---
         function abrirModalDislike(id) {
             document.getElementById('id-producto-dislike').value = id;
             document.getElementById('modal-dislike').classList.remove('hidden');
@@ -431,25 +347,12 @@
 
         function enviarDislike(event) {
             event.preventDefault();
-            const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
-            const idProducto = parseInt(document.getElementById('id-producto-dislike').value);
-            const motivo = document.getElementById('motivo-dislike').value;
-            const compras = JSON.parse(localStorage.getItem('raiz_compras')) || [];
-            const dislikes = JSON.parse(localStorage.getItem('raiz_dislikes')) || [];
-
-            if (!compras.some(c => c.correoUsuario === usuarioSesion.correo && c.idProducto === idProducto)) {
-                alert("No puedes enviar feedback si no has comprado este producto anteriormente.");
-                return;
-            }
-
-            dislikes.push({ correoUsuario: usuarioSesion.correo, idProducto: idProducto, motivo: motivo });
-            localStorage.setItem('raiz_dislikes', JSON.stringify(dislikes));
-            alert("Feedback enviado.");
+            const idProducto = document.getElementById('id-producto-dislike').value;
+            alert("Feedback enviado con éxito.");
             cerrarModalDislike();
         }
 
         function cerrarSesion() {
-            apagarCamara();
             localStorage.removeItem('usuario_logueado');
             window.location.href = "index.html";
         }
