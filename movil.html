@@ -140,7 +140,6 @@
         }
 
         async function obtenerPuntosTotalesNube() {
-            // Jalamos toda la información de las compras de este usuario ordenadas por ID descendente (la más nueva arriba)
             let { data: comprasEfectuadas, error } = await _supabase
                 .from('compras')
                 .select('*')
@@ -163,12 +162,11 @@
                 return;
             }
 
-            // Calculamos los puntos e imprimimos la fila del historial dinámicamente
             comprasEfectuadas.forEach(fila => {
                 sumaPuntos += (fila.puntos_ganados || 0);
                 
                 contenedorHistorial.innerHTML += `
-                    <div class="border border-black p-2 bg-gray-50 flex flex-col gap-0.5 text-[11px]">
+                    <div class="border border-black p-2 bg-gray-50 flex flex-col gap-0.5 text-[11px] mb-1 shadow-sm">
                         <div class="flex justify-between items-center font-black text-gray-500 uppercase text-[9px]">
                             <span><i class="ph ph-calendar-blank"></i> ${fila.fecha || 'Reciente'}</span>
                             <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 border border-amber-300 font-black rounded-sm">+${fila.puntos_ganados} PTS</span>
@@ -180,23 +178,32 @@
             document.getElementById('app-puntos-total').innerText = sumaPuntos;
         }
 
-        function cambiarPestaña(destino) {
+        // 🚀 MEJORA ABSOLUTA: Función asíncrona blindada para navegación limpia sin trabas de cámara
+        async function cambiarPestaña(destino) {
             const tabInicioContenido = document.getElementById('tab-inicio-contenido');
             const tabEscanearContenido = document.getElementById('tab-escanear-contenido');
             const btnInicio = document.getElementById('btn-tab-inicio');
             const btnEscanear = document.getElementById('btn-tab-escanear');
 
+            // Si cambiamos a otra pestaña y el escáner está activo, lo apagamos forzosamente primero
             if (destino !== 'escanear' && html5QrcodeScanner) {
-                html5QrcodeScanner.stop().catch(o => {});
+                try {
+                    await html5QrcodeScanner.stop();
+                } catch (e) {
+                    console.log("Cámara ya estaba cerrada o deteniéndose.");
+                }
+                html5QrcodeScanner = null; // Liberamos la variable por completo
                 document.getElementById('texto-estado').innerHTML = "Cámara apagada";
             }
 
+            // Cambiamos los elementos visibles de la pantalla
             if (destino === 'inicio') {
                 tabInicioContenido.classList.remove('hidden');
                 tabEscanearContenido.classList.add('hidden');
                 btnInicio.className = "flex flex-col items-center justify-center flex-1 h-full text-blue-600";
                 btnEscanear.className = "flex flex-col items-center justify-center flex-1 h-full text-gray-400";
-                obtenerPuntosTotalesNube();
+                // Ejecuta la consulta a Supabase para cargar puntos e historial actualizados
+                await obtenerPuntosTotalesNube();
             } else if (destino === 'escanear') {
                 tabInicioContenido.classList.add('hidden');
                 tabEscanearContenido.classList.remove('hidden');
@@ -207,20 +214,34 @@
 
         function encenderEscanerMovil() {
             document.getElementById('texto-estado').innerHTML = `<span class="text-blue-500"><i class="ph ph-camera animate-pulse"></i> Encendiendo lente...</span>`;
+            
+            // Si ya existía una instancia previa, intentamos destruirla para que no haga conflicto
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.stop().catch(() => {}).then(() => iniciarInstanciaCamara());
+            } else {
+                iniciarInstanciaCamara();
+            }
+        }
+
+        function iniciarInstanciaCamara() {
             html5QrcodeScanner = new Html5Qrcode("lector-camara");
             html5QrcodeScanner.start(
                 { facingMode: "environment" }, 
-                { fps: 12, qrbox: { width: 220, height: 220 } },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
                 alDetectarCodigoQR,
                 () => {}
-            ).catch(err => {
-                document.getElementById('texto-estado').innerHTML = `<span class="text-red-500">Error: Permiso denegado</span>`;
+            ).then(() => {
+                document.getElementById('texto-estado').innerHTML = `<span class="text-green-600"><i class="ph ph-unite animate-spin"></i> Lente Activo - Enfoca el QR</span>`;
+            }).catch(err => {
+                document.getElementById('texto-estado').innerHTML = `<span class="text-red-500">Error: Activa los permisos de cámara</span>`;
             });
         }
 
         async function alDetectarCodigoQR(decodedText) {
+            // Detenemos el escáner de inmediato para que no lea múltiples veces el mismo QR
             if (html5QrcodeScanner) { 
-                await html5QrcodeScanner.stop().catch(e => console.log("Cámara liberada")); 
+                try { await html5QrcodeScanner.stop(); } catch(e){}
+                html5QrcodeScanner = null;
             }
             
             const estado = document.getElementById('texto-estado');
@@ -229,10 +250,11 @@
                 const datosQR = JSON.parse(decodedText);
 
                 if (datosQR.o === "RAIZ") {
-                    estado.innerHTML = `<span class="text-yellow-600 font-bold"><i class="ph ph-cloud-arrow-up animate-bounce"></i> REGISTRANDO EN COMPRAS...</span>`;
+                    estado.innerHTML = `<span class="text-yellow-600 font-bold"><i class="ph ph-cloud-arrow-up animate-bounce"></i> PROCESANDO COMPRA...</span>`;
                     
                     let fechaHoy = new Date().toLocaleDateString('es-MX');
 
+                    // Insertamos los datos directamente en la tabla compras de Supabase
                     const { error: errorBaseDatos } = await _supabase.from('compras').insert([{
                         correo_usuario: datosQR.u,
                         productos_comprados: datosQR.d || "Compra en Sucursal",
@@ -250,10 +272,9 @@
                     
                     alert(`¡COMPRA REGISTRADA!\n\nUsuario: ${datosQR.u}\nPuntos acumulados: +${datosQR.p} pts.`);
                     
-                    setTimeout(() => {
-                        document.getElementById('texto-estado').innerHTML = "Cámara apagada";
-                        cambiarPestaña('inicio');
-                    }, 300);
+                    // Redirección inmediata y limpia al menú de inicio
+                    document.getElementById('texto-estado').innerHTML = "Cámara apagada";
+                    cambiarPestaña('inicio');
 
                 } else {
                     alert("QR no reconocido.");
