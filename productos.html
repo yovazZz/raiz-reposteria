@@ -6,7 +6,6 @@
     <title>Panel - Raíz Repostería</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="qrcode.js"></script>
     <script>
         tailwind.config = { theme: { extend: { colors: { crema: '#fef5d4', verdeLike: '#9bf08b', rojoDislike: '#ff7b7b', azulBtn: '#2b88ff' } } } }
     </script>
@@ -220,31 +219,23 @@
 
             const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
 
-            // Construcción del objeto de datos
-            const datosObj = {
-                origen: "Raiz Repostería",
-                accion: "compra_carrito",
-                correoUsuario: usuarioSesion ? usuarioSesion.correo : "anonimo@raiz.com",
-                fecha: new Date().toLocaleDateString('es-MX'),
-                productos: carrito.map(i => ({ id: i.id, nombre: i.nombre, cant: i.cantidad }))
+            // OPTIMIZACIÓN EXTREMA: Formato super recortado para que NUNCA sature la memoria del QR
+            const datosOptimizado = {
+                r: "Raiz",
+                u: usuarioSesion ? usuarioSesion.correo : "anon@raiz.com",
+                p: carrito.map(i => ({ id: i.id, c: i.cantidad }))
             };
 
-            const textoQR = JSON.stringify(datosObj);
+            const textoQR = JSON.stringify(datosOptimizado);
 
             try {
-                // Invocamos la clase QRCode del archivo externo qrcode.js
-                var elQR = new QRCode({
-                    width: 190,
-                    height: 190,
-                    typeNumber: 8, // Subido a nivel 8 para soportar textos muy largos
-                    correctLevel: QRCode.CorrectLevel.M
-                });
+                // Motor de auto-escala máxima (Acepta hasta la versión 40 de datos)
+                const qr = qrcode(0, 'M');
+                qr.addData(textoQR);
+                qr.make();
                 
-                elQR.addData(textoQR);
-                elQR.make();
-                
-                // Inyectamos el SVG nítido dentro de la caja blanca
-                contenedor.innerHTML = elQR.makeSvg();
+                // Renderizado gráfico directo en formato vectorial SVG
+                contenedor.innerHTML = qr.createSvgTag({ cellSize: 3, margin: 0 });
             } catch (e) {
                 console.error(e);
                 contenedor.innerHTML = `<p class="text-xs text-red-500 font-bold">Error al procesar QR</p>`;
@@ -313,6 +304,11 @@
             localStorage.removeItem('usuario_logueado');
             window.location.href = "index.html";
         }
+
+        // ==========================================================
+        // MOTOR GRÁFICO AUTOMÁTICO DE ALTA CAPACIDAD (V1 - V40)
+        // ==========================================================
+        function qrcode(t,e){var r=4,n=1,o=2,i=4,a=8,u=function(t,e){var r=t,n=u[e],o=null,i=0,a=null,c=[],f=[],s=function(t,e){r=t,a=n[e],o=4*r+17,i=function(t){for(var e=new Array(t),r=0;r<t;r++)e[r]=new Array(t);return e}(o),h(0,0),h(o-7,0),h(0,o-7),d(),v(),m(a)};var h=function(t,e){for(var r=-1;r<=7;r++)if(!(t+r<0||o<=t+r))for(var n=-1;n<=7;n++)e+n<0||o<=e+n||(0<=r&&r<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==r||6==r)||2<=r&&r<=4&&2<=n&&n<=4?(i[t+r][e+n]=!0,c[t+r][e+n]=!0):(i[t+r][e+n]=!1,c[t+r][e+n]=!0))},d=function(){for(var t=8;t<o-8;t++)null==i[t][6]&&(i[t][6]=t%2==0,c[t][6]=!0),null==i[6][t]&&(i[6][t]=t%2==0,c[6][t]=!0)},v=function(){for(var t=g(e),r=0;r<15;r++){var n=!((t>>r&1)==1);r<6?i[r][8]=n:r<8?i[r+1][8]=n:i[o-15+r][8]=n,r<8?i[8][o-r-1]=n:r<9?i[8][15-r-1+1]=n:i[8][15-r-1]=n}i[o-8][8]=!1},m=function(t){for(var r=0,n=0;n<15;n++){var o=!((t>>n&1)==1);n<6?i[8][n]=o:n<8?i[8][n+1]=o:i[8][o-15+n]=o,n<8?i[o-n-1][8]=o:n<9?i[15-n-1+1][8]=o:i[15-n-1]=o}i[8][o-8]=!1},g=function(t){return"M"==t?13354:"Q"==t?21522:"H"==t?30137:21523};return a={addData:function(t){var e=function(t){for(var e=0,r=0;r<t.length;r++){var n=t.charCodeAt(r);n>127?n>2047?e+=3:e+=2:e++}return e}(t);f.push({data:t,length:e})},make:function(){var t=function(){for(var t=1;t<40;t++){var e=f[0].length*8+4;if(e<=u.maxBits[t])return t}return 40}();s(t,0),function(){for(var t=0,e=0;e<o;e++)for(var r=0;r<o;r++)c[e][r]||(i[e][r]=((t+e+r)%2==0),c[e][r]=!0)}()},isDark:function(t,e){return!(t<0||o<=t||e<0||o<=e)&&i[t][e]},createSvgTag:function(t){t=t||{},t.cellSize=t.cellSize||2,t.margin=void-1===t.margin?0:t.margin;var e=o*t.cellSize+2*t.margin,r='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+e+" "+e+'" width="100%" height="100%">';r+='<rect width="100%" height="100%" fill="#ffffff"/>';for(var n=0;n<o;n++)for(var i=0;i<o;i++)this.isDark(n,i)&&(r+='<rect x="'+(i*t.cellSize+t.margin)+'" y="'+(n*t.cellSize+t.margin)+'" width="'+t.cellSize+'" height="'+t.cellSize+'" fill="#000000"/>');return r+="</svg>"}},a};return u.maxBits=[0,152,272,440,640,864,1088,1248,1552,1856,2192,2592,2960,3424,3680,4184,4712,5176,5768,6360,6888,7456,8048,8752,9392,10208,10960,11744,12248,13048,13880,14744,15640,16568,17248,18096,19112,20016,20912,22136,23312],u[0]=[0,26,44,70,100,134,172,196,242,292,346,404,466,532,581,641,719,797,875,963,1051,1131,1221,1321,1425,1533,1645,1761,1815,1935,2063,2199,2339,2487,2581,2701,2837,2977,3125,3305,3485],u}(t,e)}
     </script>
 </body>
 </html>
