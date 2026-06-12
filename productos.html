@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        tailwind.config = { theme: { extend: { colors: { crema: '#fef5d4', verdeLike: '#9bf08b', rojoDislike: '#ff7b7b', azulBtn: '#2b88ff' } } } }
+        tailwind.config = { theme: { extend: { colors: { crema: '#fef5d4', verdeLike: '#9bf08b', azulBtn: '#2b88ff' } } } }
     </script>
     <style>
         body { background-color: #fef5d4; font-family: sans-serif; color: #111; }
@@ -48,15 +48,15 @@
 
     <div id="modal-pago-qr" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white border-2 border-black p-6 w-full max-w-md shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center">
-            <h3 class="text-2xl font-bold mb-2 uppercase italic">Código de Venta</h3>
-            <p class="text-xs text-gray-600 mb-6 uppercase font-bold">Escanea este QR desde la app móvil para acumular tus puntos al instante.</p>
+            <h3 class="text-2xl font-bold mb-2 uppercase italic">Código de Puntos</h3>
+            <p class="text-xs text-gray-600 mb-6 uppercase font-bold">Muestra este código al cliente. Al escanearlo con su app móvil se registrará su compra.</p>
             <div class="p-4 bg-white border-2 border-black shadow-sm mb-4 flex items-center justify-center mx-auto w-[212px] h-[212px]">
                 <div id="canvas-qrcode"></div>
             </div>
             <p id="info-pago-qr" class="text-[11px] font-black uppercase text-blue-600 mb-6 px-2"></p>
             <div class="flex flex-col gap-2">
-                <button onclick="confirmarVentaNube()" class="w-full bg-verdeLike border-2 border-black py-3 font-bold uppercase text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">Confirmar Venta e Historial</button>
-                <button onclick="cerrarModalPago()" class="w-full border-2 border-black py-2 font-bold text-gray-500 text-[11px] uppercase">Cancelar</button>
+                <button onclick="confirmarVentaNube()" class="w-full bg-verdeLike border-2 border-black py-3 font-bold uppercase text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">Confirmar Descuento de Inventario</button>
+                <button onclick="cerrarModalPago()" class="w-full border-2 border-black py-2 font-bold text-gray-500 text-[11px] uppercase">Cerrar / Cancelar</button>
             </div>
         </div>
     </div>
@@ -78,6 +78,7 @@
         };
 
         async function descargarProductosDesdeNube() {
+            // Alineado con tus nuevas columnas id e imagen
             let { data, error } = await _supabase.from('productos').select('*').order('id', { ascending: true });
             if (error) { console.error(error); return; }
             listaProductosBD = data;
@@ -98,7 +99,7 @@
                                 <span class="text-[10px] font-black uppercase bg-gray-100 px-2 py-0.5 border border-black">Stock: ${p.stock}</span>
                             </div>
                             <div class="flex gap-2">
-                                ${p.stock > 0 ? `<button onclick="agregarAlCarrito(${p.id})" class="flex-1 bg-verdeLike border border-black py-2 font-bold text-[11px] uppercase">Agregar</button>` : `<button class="flex-1 bg-gray-300 border border-black py-2 font-bold text-[11px] uppercase cursor-not-allowed" disabled>Agotado</button>`}
+                                ${p.stock > 0 ? `<button onclick="agregarAlCarrito(${p.id})" class="flex-1 bg-verdeLike border border-black py-2 font-bold text-[11px] uppercase">Agregar al Carrito</button>` : `<button class="flex-1 bg-gray-300 border border-black py-2 font-bold text-[11px] uppercase cursor-not-allowed" disabled>Agotado</button>`}
                             </div>
                         </div>
                     </div>`;
@@ -137,44 +138,34 @@
             const contenedorQR = document.getElementById("canvas-qrcode");
             contenedorQR.innerHTML = "";
 
-            // Formato Ultra-optimizado para Puntos:
-            // u: usuario (correo), p: cantidad de puntos (1 punto por artículo comprado)
             let totalArticulos = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+            let nombresProductos = carrito.map(i => `${i.nombre} (x${i.cantidad})`).join(", ");
             
-            const datosPuntos = {
-                o: "RAIZ",
-                u: usuarioSesion.correo,
-                p: totalArticulos // Gana 1 punto por cada producto que lleva
-            };
+            // Tratamiento de errores blindado para prevenir fallos en renderizado del canvas
+            try {
+                const datosQR = {
+                    o: "RAIZ",
+                    u: usuarioSession ? usuarioSesion.correo : "anonimo@raiz.com",
+                    p: totalArticulos,
+                    d: nombresProductos
+                };
 
-            const stringQR = JSON.stringify(datosPuntos);
-
-            new QRCode(contenedorQR, { text: stringQR, width: 180, height: 180 });
-            document.getElementById("info-pago-qr").innerText = `Ganarás: ${totalArticulos} Puntos`;
+                new QRCode(contenedorQR, { text: JSON.stringify(datosQR), width: 180, height: 180 });
+                document.getElementById("info-pago-qr").innerText = `Contiene: ${totalArticulos} Artículos / Puntos`;
+            } catch (err) {
+                console.error(err);
+                contenedorQR.innerHTML = `<p class="text-red-500 text-xs font-bold">Error al generar QR de sesión</p>`;
+            }
         }
 
         async function confirmarVentaNube() {
-            let totalArticulos = carrito.reduce((sum, item) => sum + item.cantidad, 0);
-            let nombresProductos = carrito.map(i => `${i.nombre} (x${i.cantidad})`).join(", ");
-
-            // 1. Guardar en el historial de la tabla 'compras' en Supabase
-            const { error: errorHistorial } = await _supabase.from('compras').insert([{
-                correo_usuario: usuarioSesion.correo,
-                productos_comprados: nombresProductos,
-                total_articulos: totalArticulos,
-                puntos_ganados: totalArticulos
-            }]);
-
-            if (errorHistorial) { alert("Error al registrar historial"); return; }
-
-            // 2. Descontar Stock de los productos
             for (const item of carrito) {
                 const prodOriginal = listaProductosBD.find(p => p.id === item.id);
                 const nuevoStock = prodOriginal.stock - item.cantidad;
                 await _supabase.from('productos').update({ stock: nuevoStock }).eq('id', item.id);
             }
 
-            alert("¡Compra procesada! Tu historial y stock se actualizaron en la nube.");
+            alert("¡Inventario Descontado! Listo para el escaneo móvil del cliente.");
             carrito = []; cerrarModalPago(); actualizarInterfazCarrito(); descargarProductosDesdeNube();
         }
 

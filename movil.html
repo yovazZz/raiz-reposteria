@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner Móvil - Raíz Repostería</title>
+    <title>Raíz App - Puntos y Recompensas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -12,34 +12,93 @@
         tailwind.config = { theme: { extend: { colors: { crema: '#fef5d4', verdeLike: '#9bf08b', azulBtn: '#2b88ff' } } } }
     </script>
     <style>
-        body { background-color: #fef5d4; font-family: sans-serif; color: #111; }
-        .neo-card { border: 3px solid black; }
+        body { background-color: #fef5d4; font-family: sans-serif; color: #111; -webkit-tap-highlight-color: transparent; }
+        .neo-box { border: 3px solid black; }
+        .neo-card { border: 2px solid black; }
+        ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col p-4 items-center justify-center">
+<body class="min-h-screen flex flex-col items-center justify-between pb-24">
 
-    <div class="w-full max-w-md bg-white p-6 neo-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-6">
-        <div class="text-center border-b-2 border-black pb-4">
-            <h1 class="text-2xl font-black uppercase italic tracking-tight flex items-center justify-center gap-2">
-                <i class="ph ph-qr-code"></i> Raíz Scanner v2
-            </h1>
-            <p class="text-[10px] font-bold text-gray-500 uppercase mt-1">Sincronizador de Puntos en la Nube</p>
+    <div id="pantalla-login" class="w-full max-w-md p-6 flex flex-col gap-6 my-auto hidden">
+        <div class="bg-white p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-center">
+            <h1 class="text-3xl font-black uppercase italic tracking-tight mb-2">Raíz Club</h1>
+            <p class="text-xs font-bold text-gray-500 uppercase mb-6">Ingresa tu correo para ver tus puntos</p>
+            
+            <form onsubmit="iniciarSesionMovil(event)" class="flex flex-col gap-4 text-left">
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-black uppercase">Correo Electrónico:</label>
+                    <input type="email" id="login-correo" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold">
+                </div>
+                <button type="submit" class="bg-azulBtn text-white font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mt-2">
+                    Entrar a mi App
+                </button>
+            </form>
         </div>
-
-        <div class="relative w-full aspect-square bg-black border-2 border-black flex items-center justify-center overflow-hidden">
-            <div id="lector-camara" class="w-full h-full"></div>
-        </div>
-
-        <div id="panel-estado" class="bg-gray-50 border-2 border-black p-4 text-center">
-            <p id="texto-estado" class="text-xs font-black uppercase text-gray-600">
-                <i class="ph ph-aperture animate-spin mr-1"></i> Esperando QR de puntos...
-            </p>
-        </div>
-
-        <button onclick="encenderEscaner()" class="w-full bg-azulBtn text-white border-2 border-black py-3 font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-            Activar Escáner
-        </button>
     </div>
+
+    <div id="app-principal" class="w-full max-w-md p-4 flex flex-col gap-6 hidden">
+        
+        <header class="flex items-center justify-between p-2 bg-white neo-card shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] px-4">
+            <div class="font-black uppercase tracking-tighter italic text-lg">Raíz Repostería</div>
+            <button onclick="cerrarSesionMovil()" class="text-red-500 font-bold text-xs uppercase flex items-center gap-1"><i class="ph ph-sign-out"></i> Salir</button>
+        </header>
+
+        <div id="tab-inicio-contenido" class="flex flex-col gap-6">
+            <div class="bg-gradient-to-br from-yellow-100 to-orange-100 p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
+                <p class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Tarjeta de Cliente Frecuente</p>
+                <h2 id="app-usuario-correo" class="text-xs font-bold text-gray-800 uppercase mb-8 truncate">...</h2>
+                
+                <div class="flex items-end justify-between">
+                    <div>
+                        <p class="text-[10px] font-black uppercase text-gray-600">Balance Actual</p>
+                        <div class="flex items-baseline gap-1">
+                            <span id="app-puntos-total" class="text-6xl font-black tracking-tighter">0</span>
+                            <span class="text-sm font-black uppercase text-amber-600">Pts</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-2 border-2 border-black rounded-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        <i class="ph ph-crown text-3xl text-amber-500"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 neo-card shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-center">
+                <p class="text-xs font-bold uppercase text-gray-700">🍰 ¡Cada producto comprado te suma 1 punto!</p>
+                <p class="text-[10px] text-gray-500 uppercase mt-1">Canjea tus puntos en caja por postres gratis.</p>
+            </div>
+        </div>
+
+        <div id="tab-escanear-contenido" class="flex flex-col gap-6 hidden">
+            <div class="bg-white p-4 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
+                <h3 class="text-center font-black uppercase italic text-sm"><i class="ph ph-scan"></i> Enfoca tu Código QR</h3>
+                
+                <div class="w-full aspect-square bg-black border-2 border-black overflow-hidden relative">
+                    <div id="lector-camara" class="w-full h-full"></div>
+                </div>
+
+                <div id="panel-estado" class="bg-gray-100 border border-black p-3 text-center text-xs font-bold uppercase">
+                    <p id="texto-estado" class="text-gray-600">Cámara apagada</p>
+                </div>
+
+                <button onclick="encenderEscanerMovil()" class="w-full bg-azulBtn text-white border-2 border-black py-3 font-bold uppercase text-xs tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    Iniciar Lente de Cámara
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <nav id="barra-navegacion" class="fixed bottom-0 left-0 right-0 h-20 bg-white border-t-4 border-black flex justify-around items-center px-4 z-40 max-w-md mx-auto hidden">
+        <button onclick="cambiarPestaña('inicio')" id="btn-tab-inicio" class="flex flex-col items-center justify-center flex-1 h-full text-blue-600">
+            <i class="ph ph-house-line text-2xl font-bold"></i>
+            <span class="text-[10px] font-black uppercase tracking-wider mt-1">Inicio</span>
+        </button>
+        <button onclick="cambiarPestaña('escanear')" id="btn-tab-escanear" class="flex flex-col items-center justify-center flex-1 h-full text-gray-400">
+            <i class="ph ph-qr-code text-2xl"></i>
+            <span class="text-[10px] font-black uppercase tracking-wider mt-1">Escanear</span>
+        </button>
+    </nav>
 
     <script>
         const SUPABASE_URL = "https://ksxrpcfvnnkjfriolvxs.supabase.co";
@@ -47,44 +106,130 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let html5QrcodeScanner = null;
+        let usuarioEmailLogueado = null;
 
-        function encenderEscaner() {
-            document.getElementById('texto-estado').innerHTML = `<span class="text-blue-600"><i class="ph ph-camera animate-pulse mr-1"></i> Leyendo lente óptico...</span>`;
+        window.onload = function() {
+            usuarioEmailLogueado = localStorage.getItem('app_movil_correo');
+            if (!usuarioEmailLogueado) {
+                document.getElementById('pantalla-login').classList.remove('hidden');
+            } else {
+                mostrarAppPrincipal();
+            }
+        };
+
+        function iniciarSesionMovil(e) {
+            e.preventDefault();
+            const correo = document.getElementById('login-correo').value.trim().toLowerCase();
+            if(!correo) return;
+            localStorage.setItem('app_movil_correo', correo);
+            usuarioEmailLogueado = correo;
+            document.getElementById('pantalla-login').classList.add('hidden');
+            mostrarAppPrincipal();
+        }
+
+        function mostrarAppPrincipal() {
+            document.getElementById('app-principal').classList.remove('hidden');
+            document.getElementById('barra-navegacion').classList.remove('hidden');
+            document.getElementById('app-usuario-correo').innerText = usuarioEmailLogueado;
+            obtenerPuntosTotalesNube();
+        }
+
+        async function obtenerPuntosTotalesNube() {
+            // Conectado directamente a tu tabla 'compras'
+            let { data: comprasEfectuadas, error } = await _supabase
+                .from('compras')
+                .select('puntos_ganados')
+                .eq('correo_usuario', usuarioEmailLogueado);
+
+            if (error) { console.error(error); return; }
+            let sumaPuntos = 0;
+            if (comprasEfectuadas) {
+                sumaPuntos = comprasEfectuadas.reduce((total, fila) => total + (fila.puntos_ganados || 0), 0);
+            }
+            document.getElementById('app-puntos-total').innerText = sumaPuntos;
+        }
+
+        function cambiarPestaña(destino) {
+            const tabInicioContenido = document.getElementById('tab-inicio-contenido');
+            const tabEscanearContenido = document.getElementById('tab-escanear-contenido');
+            const btnInicio = document.getElementById('btn-tab-inicio');
+            const btnEscanear = document.getElementById('btn-tab-escanear');
+
+            if (destino !== 'escanear' && html5QrcodeScanner) {
+                html5QrcodeScanner.stop().catch(o => {});
+                document.getElementById('texto-estado').innerHTML = "Cámara apagada";
+            }
+
+            if (destino === 'inicio') {
+                tabInicioContenido.classList.remove('hidden');
+                tabEscanearContenido.classList.add('hidden');
+                btnInicio.className = "flex flex-col items-center justify-center flex-1 h-full text-blue-600";
+                btnEscanear.className = "flex flex-col items-center justify-center flex-1 h-full text-gray-400";
+                obtenerPuntosTotalesNube();
+            } else if (destino === 'escanear') {
+                tabInicioContenido.classList.add('hidden');
+                tabEscanearContenido.classList.remove('hidden');
+                btnInicio.className = "flex flex-col items-center justify-center flex-1 h-full text-gray-400";
+                btnEscanear.className = "flex flex-col items-center justify-center flex-1 h-full text-blue-600";
+            }
+        }
+
+        function encenderEscanerMovil() {
+            document.getElementById('texto-estado').innerHTML = `<span class="text-blue-500"><i class="ph ph-camera animate-pulse"></i> Encendiendo lente...</span>`;
             html5QrcodeScanner = new Html5Qrcode("lector-camara");
             html5QrcodeScanner.start(
                 { facingMode: "environment" }, 
-                { fps: 10, qrbox: { width: 250, height: 250 } },
+                { fps: 12, qrbox: { width: 220, height: 220 } },
                 alDetectarCodigoQR,
                 () => {}
             ).catch(err => {
-                document.getElementById('texto-estado').innerHTML = `<span class="text-red-500">Error de acceso a cámara</span>`;
+                document.getElementById('texto-estado').innerHTML = `<span class="text-red-500">Error: Permiso denegado</span>`;
             });
         }
 
         async function alDetectarCodigoQR(decodedText) {
-            if (html5QrcodeScanner) { html5QrcodeScanner.stop(); }
+            if (html5QrcodeScanner) { await html5QrcodeScanner.stop().catch(e => {}); }
             const estado = document.getElementById('texto-estado');
             
             try {
-                // Desciframos el JSON del código QR
-                const objetoDatos = JSON.parse(decodedText);
+                const datosQR = JSON.parse(decodedText);
 
-                // Verificamos que sea nuestro formato seguro
-                if (objetoDatos.o === "RAIZ") {
-                    estado.innerHTML = `<span class="text-yellow-600 font-bold"><i class="ph ph-cloud-arrow-up animate-bounce mr-1"></i> CARGANDO PUNTOS...</span>`;
+                if (datosQR.o === "RAIZ") {
+                    estado.innerHTML = `<span class="text-yellow-600 font-bold"><i class="ph ph-cloud-arrow-up animate-bounce"></i> REGISTRANDO EN COMPRAS...</span>`;
                     
-                    // Mostramos la alerta de éxito con los datos reales de la nube
-                    alert(`¡VALIDACIÓN EXITOSA!\n\nUsuario: ${objetoDatos.u}\nPuntos asignados: +${objetoDatos.p} pts.`);
+                    let fechaHoy = new Date().toLocaleDateString('es-MX');
+
+                    // Sincronizado para escribir directamente en tu tabla 'compras'
+                    const { error: errorBaseDatos } = await _supabase.from('compras').insert([{
+                        correo_usuario: datosQR.u,
+                        productos_comprados: datosQR.d || "Compra en Sucursal",
+                        total_articulos: datosQR.p,
+                        puntos_ganados: datosQR.p,
+                        fecha: fechaHoy
+                    }]);
+
+                    if (errorBaseDatos) {
+                        console.error(errorBaseDatos);
+                        alert("Error al guardar en la tabla compras.");
+                        estado.innerHTML = `<span class="text-red-500">Error de guardado</span>`;
+                        return;
+                    }
                     
-                    estado.innerHTML = `<span class="text-green-600 font-bold">✓ Puntos Guardados Exitosamente</span>`;
+                    alert(`¡COMPRA REGISTRADA!\n\nUsuario: ${datosQR.u}\nPuntos acumulados: +${datosQR.p} pts.`);
+                    cambiarPestaña('inicio');
                 } else {
-                    alert("Código QR no reconocido por Raíz Repostería.");
+                    alert("QR no reconocido.");
                     estado.innerHTML = `<span class="text-red-500">Código Inválido</span>`;
                 }
             } catch (e) {
-                alert("Error al procesar la estructura del QR.");
+                alert("Formato de QR incorrecto.");
                 estado.innerHTML = `<span class="text-red-500">Error de lectura</span>`;
             }
+        }
+
+        function cerrarSesionMovil() {
+            localStorage.removeItem('app_movil_correo');
+            location.reload();
         }
     </script>
 </body>
