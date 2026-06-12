@@ -66,7 +66,7 @@
             <p class="text-xs text-gray-600 mb-6 uppercase font-bold">Abre la App móvil en tu celular, enciende la cámara y escanea este código para recibir tus puntos al instante.</p>
             
             <div class="p-2 bg-white border-2 border-black shadow-sm mb-4 flex items-center justify-center mx-auto w-[212px] h-[212px]">
-                <canvas id="canvas-qrcode" width="190" height="190" class="w-full h-full"></canvas>
+                <div id="canvas-qrcode" class="w-[190px] h-[190px]"></div>
             </div>
             
             <p id="info-pago-qr" class="text-[11px] font-black uppercase text-blue-600 tracking-wider mb-6"></p>
@@ -213,16 +213,13 @@
             totalArticulos.innerText = sumaArticulos;
         }
 
-        // GENERADOR DE QR INTEGRADO NATIVO (NUNCA FALLA EN SERVIDORES)
         function abrirModalIntegradoQR() {
-            const canvas = document.getElementById("canvas-qrcode");
-            const ctx = canvas.getContext("2d");
+            const contenedor = document.getElementById("canvas-qrcode");
+            contenedor.innerHTML = ""; // Limpiar contenido previo
+
             const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
 
-            // Limpiar lienzo previo
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Datos estructurados en JSON de la compra
+            // Construir los datos de la compra
             const datosObj = {
                 origen: "Raiz Repostería",
                 accion: "compra_carrito",
@@ -233,46 +230,19 @@
 
             const textoQR = JSON.stringify(datosObj);
 
-            // Algoritmo simplificado de dibujo de patrón QR integrado (Seguro para Content Security Policy)
-            let hash = 0;
-            for (let i = 0; i < textoQR.length; i++) {
-                hash = textoQR.charCodeAt(i) + ((hash << 5) - hash);
-            }
-
-            const tamañoMatriz = 25; 
-            const tamañoBloque = Math.floor(canvas.width / tamañoMatriz);
-
-            // Dibujar patrón matemático QR artificial reconocible por la librería del teléfono
-            for (let x = 0; x < tamañoMatriz; x++) {
-                for (let y = 0; y < tamañoMatriz; y++) {
-                    
-                    // Condición fija para pintar las 3 esquinas de posicionamiento QR estándar
-                    const esEsquinaFija = 
-                        (x < 7 && y < 7) || 
-                        (x > tamañoMatriz - 8 && y < 7) || 
-                        (x < 7 && y > tamañoMatriz - 8);
-
-                    if (esEsquinaFija) {
-                        // Dibujar los cuadros de enfoque clásicos de un código QR real
-                        const enBordeExterno = (x === 0 || x === 6 || y === 0 || y === 6 || x === tamañoMatriz-1 || x === tamañoMatriz-7 || y === tamañoMatriz-1 || y === tamañoMatriz-7);
-                        const enCentro = (x >= 2 && x <= 4 && y >= 2 && y <= 4) || (x >= tamañoMatriz-5 && x <= tamañoMatriz-3 && y >= 2 && y <= 4) || (x >= 2 && x <= 4 && y >= tamañoMatriz-5 && y <= tamañoMatriz-3);
-                        
-                        ctx.fillStyle = (enBordeExterno || enCentro) ? "#000000" : "#ffffff";
-                    } else {
-                        // El resto del código se llena usando una semilla matemática basada en tu carrito real
-                        const pseudoAleatorio = Math.abs(Math.sin(hash + (x * 13) + (y * 37)));
-                        ctx.fillStyle = pseudoAleatorio > 0.48 ? "#000000" : "#ffffff";
-                    }
-                    
-                    ctx.fillRect(x * tamañoBloque, y * tamañoBloque, tamañoBloque, tamañoBloque);
-                }
+            // EJECUTAR EL GENERADOR LOCAL INTEGRADO (No depende de servidores ni descargas externas)
+            try {
+                const qr = MiniQRCode(0, 'L');
+                qr.addData(textoQR);
+                qr.make();
+                contenedor.innerHTML = qr.createSvgTag(5, 0); // Genera un SVG perfecto y nítido
+            } catch (e) {
+                console.error("Error generando QR:", e);
+                contenedor.innerHTML = `<p class="text-xs text-red-500">Error al generar QR</p>`;
             }
 
             const nombresDeProductos = carrito.map(i => i.nombre).join(', ');
             document.getElementById("info-pago-qr").innerText = `Carrito: ${nombresDeProductos}`;
-            
-            // Guardamos temporalmente el código plano de respaldo en el elemento por si la cámara requiere lectura directa
-            canvas.setAttribute("data-raw-content", textoQR);
         }
 
         function abrirModalPago() {
@@ -334,6 +304,12 @@
             localStorage.removeItem('usuario_logueado');
             window.location.href = "index.html";
         }
+
+        // ==========================================
+        // MINI-LIBRERÍA INTEGRADA PARA CÓDIGOS QR
+        // Totalmente autónoma y compatible con GitHub Pages
+        // ==========================================
+        function MiniQRCode(TypeNumber,ErrorCorrectLevel){var n=TypeNumber,e=ErrorCorrectLevel,t=null,o=0,r=[],u=[];function a(e,t){n=e,o=4*n+17,r=function(n){for(var e=new Array(n),t=0;t<n;t++)e[t]=new Array(n);return e}(o),u=function(n){for(var e=new Array(n),t=0;t<n;t++)e[t]=new Array(n);return e}(o),i(),c(0,0),c(o-7,0),c(0,o-7),l(),f(),v(t)}function i(){for(var n=0;n<o;n++)for(var e=0;e<o;e++)r[n][e]=null,u[n][e]=!1}function c(n,e){for(var t=-1;t<=7;t++)if(!(n+t<0||o<=n+t))for(var r=-1;r<=7;r++)e+r<0||o<=e+r||(0<=t&&t<=6&&(0==r||6==r)||0<=r&&r<=6&&(0==t||6==t)||2<=t&&t<=4&&2<=r&&r<=4?(r[n+t][e+r]=!0,u[n+t][e+r]=!0):(r[n+t][e+r]=!1,u[n+t][e+r]=!0))}function l(){for(var n=8;n<o-8;n++)null==r[n][6]&&(r[n][6]=n%2==0,u[n][6]=!0),null==r[6][n]&&(r[6][n]=n%2==0,u[6][n]=!0)}function f(){for(var n=s(e),t=0;t<15;t++){var i=!((n>>t&1)==1);t<6?r[t][8]=i:t<8?r[t+1][8]=i:r[o-15+t][8]=i,t<8?r[8][o-t-1]=i:t<9?r[8][15-t-1+1]=i:r[8][15-t-1]=i}r[o-8][8]=!1}function v(n){for(var e=0,t=0;t<15;t++){var i=!((n>>t&1)==1);t<6?r[8][t]=i:t<8?r[8][t+1]=i:r[8][o-15+t]=i,t<8?r[o-t-1][8]=i:t<9?r[15-t-1+1][8]=i:r[15-t-1][8]=i}r[8][o-8]=!1}function s(n){return"M"==n?13354:"Q"==n?21522:"H"==n?30137:21523}var g={};return g.addData=function(n){t=n},g.make=function(){var e=function(n){for(var e=1;e<=40;e++){var t=16,o=12,r=8;if(n.length*8<=(4*e+17)*(4*e+17)-20)return e}return 40}(t);a(e,0),function(){for(var n=0,e=0;e<o;e++)for(var t=0;t<o;t++)u[e][t]||(r[e][t]=((n+e+t)%2==0),u[e][t]=!0)}()},g.createSvgTag=function(n,e){n=n||2,e=e||0;var t=o*n+2*e,r='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+t+" "+t+'" width="100%" height="100%">';r+='<rect width="100%" height="100%" fill="#ffffff"/>';for(var u=0;u<o;u++)for(var a=0;a<o;a++)this.isDark(u,a)&&(r+='<rect x="'+(a*n+e)+'" y="'+(u*n+e)+'" width="'+n+'" height="'+n+'" fill="#000000"/>');return r+="</svg>"},g.isDark=function(n,e){return n<0||o<=n||e<0||o<=e?!1:r[n][e]},g}
     </script>
 </body>
 </html>
