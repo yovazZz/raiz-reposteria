@@ -3,124 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Raíz Repostería - Registro e Inicio</title>
+    <title>Raíz Repostería - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: { colors: { crema: '#fef5d4', azulBtn: '#2b88ff' } }
-            }
-        }
+        tailwind.config = { theme: { extend: { colors: { crema: '#fef5d4', azulBtn: '#2b88ff' } } } }
     </script>
-    <style>
-        body { background-color: #fef5d4; font-family: sans-serif; color: #111; }
-    </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="bg-crema min-h-screen flex flex-col items-center justify-center p-6 font-sans">
 
-    <header class="p-4 border-b border-gray-300 flex items-center">
-        <i class="ph ph-dots-three text-2xl font-bold"></i>
-    </header>
-
-    <div class="flex-1 flex flex-col items-center justify-center p-6">
-        <h1 id="auth-title" class="text-4xl font-bold mb-2">Crear Cuenta</h1>
-        <p class="mb-8 text-gray-700">
-            <span id="auth-subtitle">¿Ya tienes cuenta?</span> 
-            <button onclick="cambiarModo()" id="btn-toggle" class="text-azulBtn font-bold underline">Inicia Sesión</button>
+    <div class="bg-white p-8 border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] w-full max-w-md">
+        <h1 id="auth-title" class="text-3xl font-bold mb-2 uppercase italic">Iniciar Sesión</h1>
+        <p id="auth-switch-text" class="mb-6 text-sm text-gray-600 uppercase font-bold cursor-pointer hover:underline" onclick="toggleAuth()">
+            ¿No tienes cuenta? Regístrate aquí
         </p>
 
-        <form id="auth-form" onsubmit="handleAuth(event)" class="w-full max-w-sm flex flex-col gap-4">
-            
-            <div id="field-nombre" class="flex flex-col gap-1">
-                <label class="text-xs font-bold uppercase text-gray-500">Nombre Completo</label>
-                <input type="text" id="nombre" name="nombre" class="border border-gray-400 p-3 outline-none focus:border-black bg-white" required>
+        <form id="auth-form" onsubmit="manejarAuth(event)" class="flex flex-col gap-4">
+            <div id="grupo-nombre" class="hidden flex flex-col gap-1">
+                <label class="text-xs font-black uppercase">Nombre completo:</label>
+                <input type="text" id="auth-nombre" class="border-2 border-black p-2 outline-none focus:bg-yellow-50">
             </div>
 
             <div class="flex flex-col gap-1">
-                <label class="text-xs font-bold uppercase text-gray-500">Correo Electrónico</label>
-                <input type="email" id="correo" name="correo" required class="border border-gray-400 p-3 outline-none focus:border-black bg-white">
+                <label class="text-xs font-black uppercase">Correo electrónico:</label>
+                <input type="email" id="auth-correo" required class="border-2 border-black p-2 outline-none focus:bg-yellow-50">
             </div>
 
             <div class="flex flex-col gap-1">
-                <label class="text-xs font-bold uppercase text-gray-500">Contraseña</label>
-                <input type="password" id="password" name="password" required class="border border-gray-400 p-3 outline-none focus:border-black bg-white">
+                <label class="text-xs font-black uppercase">Contraseña:</label>
+                <input type="password" id="auth-password" required class="border-2 border-black p-2 outline-none focus:bg-yellow-50">
             </div>
 
-            <button type="submit" id="btn-submit" class="bg-azulBtn text-white font-bold py-4 shadow-lg hover:bg-blue-700 transition-colors uppercase tracking-widest mt-4">
-                Crear Cuenta
+            <button type="submit" id="auth-btn" class="bg-azulBtn text-white font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:shadow-none transition-all mt-2">
+                Ingresar
             </button>
         </form>
     </div>
 
     <script>
-        let isLoginMode = false;
+        let isLoginMode = true;
 
-        function cambiarModo() {
+        function toggleAuth() {
             isLoginMode = !isLoginMode;
-            const titulo = document.getElementById('auth-title');
-            const subtitulo = document.getElementById('auth-subtitle');
-            const fieldNombre = document.getElementById('field-nombre');
-            const btnSubmit = document.getElementById('btn-submit');
-            const btnToggle = document.getElementById('btn-toggle');
-
-            if (isLoginMode) {
-                titulo.innerText = "Iniciar Sesión";
-                subtitulo.innerText = "¿No tienes cuenta?";
-                btnToggle.innerText = "Regístrate";
-                fieldNombre.style.display = "none";
-                document.getElementById('nombre').removeAttribute('required');
-                btnSubmit.innerText = "Entrar";
-            } else {
-                titulo.innerText = "Crear Cuenta";
-                subtitulo.innerText = "¿Ya tienes cuenta?";
-                btnToggle.innerText = "Inicia Sesión";
-                fieldNombre.style.display = "flex";
-                document.getElementById('nombre').setAttribute('required', 'true');
-                btnSubmit.innerText = "Crear Cuenta";
-            }
+            document.getElementById('auth-title').innerText = isLoginMode ? "Iniciar Sesión" : "Crear Cuenta";
+            document.getElementById('auth-switch-text').innerText = isLoginMode ? "¿No tienes cuenta? Regístrate aquí" : "¿Ya tienes cuenta? Ingresa aquí";
+            document.getElementById('auth-btn').innerText = isLoginMode ? "Ingresar" : "Registrarme";
+            document.getElementById('grupo-nombre').classList.toggle('hidden', isLoginMode);
+            document.getElementById('auth-nombre').required = !isLoginMode;
         }
 
-        // LÓGICA LOCAL SIN PHP
-        function handleAuth(event) {
-            event.preventDefault();
-            
-            const nombre = document.getElementById('nombre').value;
-            const correo = document.getElementById('correo').value;
-            const password = document.getElementById('password').value;
-
-            // Obtener lista de usuarios registrados o crear una vacía si no existe
+        function manejarAuth(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('auth-nombre').value;
+            const correo = document.getElementById('auth-correo').value;
+            const password = document.getElementById('auth-password').value;
             let usuarios = JSON.parse(localStorage.getItem('raiz_usuarios')) || [];
 
             if (isLoginMode) {
-                // Modo Iniciar Sesión
-                const usuarioEncontrado = usuarios.find(u => u.correo === correo && u.password === password);
-                
-                if (usuarioEncontrado) {
-                    localStorage.setItem('usuario_logueado', JSON.stringify({ 
-                        nombre: usuarioEncontrado.nombre, 
-                        correo: usuarioEncontrado.correo 
-                    }));
+                const user = usuarios.find(u => u.correo === correo && u.password === password);
+                if (user) {
+                    localStorage.setItem('usuario_logueado', JSON.stringify({ nombre: user.nombre, correo: user.correo }));
                     window.location.href = "productos.html";
                 } else {
-                    alert("Correo o contraseña incorrectos.");
+                    alert("Datos incorrectos.");
                 }
             } else {
-                // Modo Registro
-                const existe = usuarios.some(u => u.correo === correo);
-                if (existe) {
-                    alert("Este correo ya está registrado.");
-                    return;
-                }
-
-                // Guardar nuevo usuario
-                const nuevoUsuario = { nombre, correo, password };
-                usuarios.push(nuevoUsuario);
+                if (usuarios.some(u => u.correo === correo)) { alert("El correo ya existe."); return; }
+                usuarios.push({ nombre, correo, password });
                 localStorage.setItem('raiz_usuarios', JSON.stringify(usuarios));
-
-                // Iniciar sesión automáticamente
                 localStorage.setItem('usuario_logueado', JSON.stringify({ nombre, correo }));
-                alert("¡Cuenta creada con éxito!");
                 window.location.href = "productos.html";
             }
         }

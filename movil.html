@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Móvil - Raíz Repostería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { crema: '#fef5d4', verdeLike: '#9bf08b', azulBtn: '#2b88ff' } } } }
+    </script>
+    <style>
+        body { background-color: #fef5d4; font-family: sans-serif; color: #111; }
+        .neo-card { border: 3px solid black; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 items-center justify-center">
+
+    <div class="w-full max-w-md bg-white p-6 neo-card shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-6">
+        <div class="text-center border-b-2 border-black pb-4">
+            <h1 class="text-2xl font-black uppercase italic tracking-tight flex items-center justify-center gap-2">
+                <i class="ph ph-qr-code"></i> Raíz Scanner v2
+            </h1>
+            <p class="text-[10px] font-bold text-gray-500 uppercase mt-1">Sincronizador de Puntos en la Nube</p>
+        </div>
+
+        <div class="relative w-full aspect-square bg-black border-2 border-black flex items-center justify-center overflow-hidden">
+            <div id="lector-camara" class="w-full h-full"></div>
+        </div>
+
+        <div id="panel-estado" class="bg-gray-50 border-2 border-black p-4 text-center">
+            <p id="texto-estado" class="text-xs font-black uppercase text-gray-600">
+                <i class="ph ph-aperture animate-spin mr-1"></i> Esperando QR de puntos...
+            </p>
+        </div>
+
+        <button onclick="encenderEscaner()" class="w-full bg-azulBtn text-white border-2 border-black py-3 font-bold uppercase text-xs tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            Activar Escáner
+        </button>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://ksxrpcfvnnkjfriolvxs.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_UXlc_48QjL-VGyvspecs2w_hbPKq3Il";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let html5QrcodeScanner = null;
+
+        function encenderEscaner() {
+            document.getElementById('texto-estado').innerHTML = `<span class="text-blue-600"><i class="ph ph-camera animate-pulse mr-1"></i> Leyendo lente óptico...</span>`;
+            html5QrcodeScanner = new Html5Qrcode("lector-camara");
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                alDetectarCodigoQR,
+                () => {}
+            ).catch(err => {
+                document.getElementById('texto-estado').innerHTML = `<span class="text-red-500">Error de acceso a cámara</span>`;
+            });
+        }
+
+        async function alDetectarCodigoQR(decodedText) {
+            if (html5QrcodeScanner) { html5QrcodeScanner.stop(); }
+            const estado = document.getElementById('texto-estado');
+            
+            try {
+                // Desciframos el JSON del código QR
+                const objetoDatos = JSON.parse(decodedText);
+
+                // Verificamos que sea nuestro formato seguro
+                if (objetoDatos.o === "RAIZ") {
+                    estado.innerHTML = `<span class="text-yellow-600 font-bold"><i class="ph ph-cloud-arrow-up animate-bounce mr-1"></i> CARGANDO PUNTOS...</span>`;
+                    
+                    // Mostramos la alerta de éxito con los datos reales de la nube
+                    alert(`¡VALIDACIÓN EXITOSA!\n\nUsuario: ${objetoDatos.u}\nPuntos asignados: +${objetoDatos.p} pts.`);
+                    
+                    estado.innerHTML = `<span class="text-green-600 font-bold">✓ Puntos Guardados Exitosamente</span>`;
+                } else {
+                    alert("Código QR no reconocido por Raíz Repostería.");
+                    estado.innerHTML = `<span class="text-red-500">Código Inválido</span>`;
+                }
+            } catch (e) {
+                alert("Error al procesar la estructura del QR.");
+                estado.innerHTML = `<span class="text-red-500">Error de lectura</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

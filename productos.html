@@ -6,6 +6,8 @@
     <title>Panel - Raíz Repostería</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = { theme: { extend: { colors: { crema: '#fef5d4', verdeLike: '#9bf08b', rojoDislike: '#ff7b7b', azulBtn: '#2b88ff' } } } }
     </script>
@@ -14,121 +16,78 @@
         .product-card, .neo-box { border: 2px solid black; }
         .product-card { transition: transform 0.2s; }
         .product-card:hover { transform: translateY(-5px); }
-        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col relative overflow-x-hidden">
+<body class="min-h-screen flex flex-col overflow-x-hidden">
 
-    <header class="p-4 border-b-2 border-black flex items-center justify-between bg-crema px-6 min-h-[76px]">
+    <header class="p-4 border-b-2 border-black flex items-center justify-between bg-crema px-6">
         <div class="font-bold uppercase tracking-tighter italic text-xl">Raíz Repostería</div>
         <div class="flex items-center gap-4">
             <span id="usuario-nombre" class="text-xs font-black uppercase text-gray-700 bg-white px-3 py-1.5 border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">Cargando...</span>
-            <button onclick="cerrarSesion()" class="bg-red-100 text-red-600 border border-red-400 font-bold text-[10px] px-3 py-1.5 uppercase hover:bg-red-200 transition-colors">
-                Salir
-            </button>
+            <button onclick="cerrarSesion()" class="bg-red-100 text-red-600 border border-red-400 font-bold text-[10px] px-3 py-1.5 uppercase hover:bg-red-200">Salir</button>
         </div>
     </header>
 
     <main class="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         <section class="lg:col-span-2">
-            <h2 class="text-3xl font-bold mb-8 uppercase italic tracking-tight flex items-center gap-2">
-                <i class="ph ph-storefront"></i> Nuestro Catálogo
-            </h2>
-            <div id="contenedor-productos" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            <h2 class="text-3xl font-bold mb-8 uppercase italic flex items-center gap-2"><i class="ph ph-storefront"></i> Catálogo en la Nube</h2>
+            <div id="contenedor-productos" class="grid grid-cols-1 md:grid-cols-2 gap-6">Cargando base de datos...</div>
         </section>
 
         <section>
             <div class="bg-white p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sticky top-6">
-                <h3 class="text-xl font-bold uppercase italic tracking-tight mb-4 flex items-center gap-2 border-b-2 border-black pb-2">
-                    <i class="ph ph-shopping-cart-simple"></i> Tu Carrito
-                </h3>
-                
-                <div id="lista-carrito" class="flex flex-col gap-3 max-h-64 overflow-y-auto mb-4 pr-1"></div>
-
+                <h3 class="text-xl font-bold uppercase italic mb-4 flex items-center gap-2 border-b-2 border-black pb-2"><i class="ph ph-shopping-cart-simple"></i> Carrito</h3>
+                <div id="lista-carrito" class="flex flex-col gap-3 max-h-64 overflow-y-auto mb-4"></div>
                 <div class="border-t-2 border-black pt-4 flex flex-col gap-2">
-                    <div class="flex justify-between font-bold text-sm uppercase">
-                        <span>Total de artículos:</span>
-                        <span id="carrito-cantidad">0</span>
-                    </div>
-                    
-                    <button id="btn-pagar" onclick="abrirModalPago()" disabled class="w-full mt-2 bg-gray-300 text-gray-500 cursor-not-allowed border-2 border-black py-3 font-bold uppercase text-xs tracking-wider transition-all">
-                        Proceder al Pago (Generar QR)
-                    </button>
+                    <div class="flex justify-between font-bold text-sm uppercase"><span>Total artículos:</span><span id="carrito-cantidad">0</span></div>
+                    <button id="btn-pagar" onclick="abrirModalPago()" disabled class="w-full mt-2 bg-gray-300 text-gray-500 border-2 border-black py-3 font-bold uppercase text-xs">Proceder al Pago</button>
                 </div>
             </div>
         </section>
     </main>
 
-    <div id="modal-pago-qr" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+    <div id="modal-pago-qr" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white border-2 border-black p-6 w-full max-w-md shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center">
-            <h3 class="text-2xl font-bold mb-2 uppercase italic">Pagar Compra</h3>
-            <p class="text-xs text-gray-600 mb-6 uppercase font-bold">Abre la App móvil en tu celular, enciende la cámara y escanea este código para recibir tus puntos al instante.</p>
-            
-            <div class="p-2 bg-white border-2 border-black shadow-sm mb-4 flex items-center justify-center mx-auto w-[212px] h-[212px]">
-                <div id="canvas-qrcode" class="w-[190px] h-[190px] flex items-center justify-center"></div>
+            <h3 class="text-2xl font-bold mb-2 uppercase italic">Código de Venta</h3>
+            <p class="text-xs text-gray-600 mb-6 uppercase font-bold">Escanea este QR desde la app móvil para acumular tus puntos al instante.</p>
+            <div class="p-4 bg-white border-2 border-black shadow-sm mb-4 flex items-center justify-center mx-auto w-[212px] h-[212px]">
+                <div id="canvas-qrcode"></div>
             </div>
-            
-            <p id="info-pago-qr" class="text-[11px] font-black uppercase text-blue-600 tracking-wider mb-6 px-2 break-words"></p>
-
+            <p id="info-pago-qr" class="text-[11px] font-black uppercase text-blue-600 mb-6 px-2"></p>
             <div class="flex flex-col gap-2">
-                <button onclick="simularConfirmacionDesdeApp()" class="w-full bg-verdeLike border-2 border-black py-3 font-bold hover:opacity-90 uppercase text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                    Confirmar Venta y Descontar Stock
-                </button>
-                <button onclick="cerrarModalPago()" class="w-full border-2 border-black py-2 font-bold hover:bg-gray-100 uppercase text-[11px] text-gray-500">
-                    Cerrar / Cancelar
-                </button>
+                <button onclick="confirmarVentaNube()" class="w-full bg-verdeLike border-2 border-black py-3 font-bold uppercase text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">Confirmar Venta e Historial</button>
+                <button onclick="cerrarModalPago()" class="w-full border-2 border-black py-2 font-bold text-gray-500 text-[11px] uppercase">Cancelar</button>
             </div>
         </div>
     </div>
-
-    <div id="modal-dislike" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white border-2 border-black p-6 w-full max-w-md shadow-[8px_8px_0px_0px_rgba(255,123,123,1)]">
-            <h3 class="text-2xl font-bold mb-4 uppercase italic">¿Qué no te gustó?</h3>
-            <form id="form-dislike" onsubmit="enviarDislike(event)">
-                <input type="hidden" id="id-producto-dislike">
-                <div class="mb-6">
-                    <textarea id="motivo-dislike" required class="w-full border-2 border-black p-3 outline-none focus:bg-crema h-32" placeholder="Cuéntanos por qué no te gustó el producto..."></textarea>
-                </div>
-                <div class="flex gap-3">
-                    <button type="button" onclick="cerrarModalDislike()" class="flex-1 border-2 border-black py-3 font-bold hover:bg-gray-100 uppercase text-xs">Cancelar</button>
-                    <button type="submit" class="flex-1 bg-rojoDislike border-2 border-black py-3 font-bold hover:opacity-90 uppercase text-xs">Enviar Feedback</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <footer class="bg-white border-t-2 border-black p-6 text-center text-xs font-bold uppercase mt-auto">
-        © 2026 Raíz Repostería
-    </footer>
 
     <script>
-        const productosIniciales = [
-            { id: 1, nombre: "Pastel de Chocolate", descripcion: "Delicioso pastel de chocolate amargo con capas de fudge artesanal.", stock: 10, imagen: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500" },
-            { id: 2, nombre: "Cheesecake de Fresa", descripcion: "Cremoso cheesecake estilo Nueva York cubierto con mermelada casera de fresas.", stock: 5, imagen: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500" },
-            { id: 3, nombre: "Tarta de Limón", descripcion: "Tarta crujiente rellena de crema ácida de limón y un merengue italiano perfecto.", stock: 8, imagen: "https://images.unsplash.com/photo-1519869325930-281384150729?w=500" }
-        ];
+        const SUPABASE_URL = "https://ksxrpcfvnnkjfriolvxs.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_UXlc_48QjL-VGyvspecs2w_hbPKq3Il";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        let listaProductosBD = [];
         let carrito = [];
+        let usuarioSesion = null;
 
         window.onload = function() {
-            const usuario = JSON.parse(localStorage.getItem('usuario_logueado'));
-            if (!usuario) { window.location.href = "index.html"; return; }
-            document.getElementById('usuario-nombre').innerText = "Hola, " + usuario.nombre;
-            
-            if (!localStorage.getItem('raiz_productos')) { localStorage.setItem('raiz_productos', JSON.stringify(productosIniciales)); }
-            if (!localStorage.getItem('raiz_compras')) { localStorage.setItem('raiz_compras', JSON.stringify([])); }
-
-            cargarProductos();
-            actualizarInterfazCarrito();
+            usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
+            if (!usuarioSesion) { window.location.href = "index.html"; return; }
+            document.getElementById('usuario-nombre').innerText = "Hola, " + usuarioSesion.nombre;
+            descargarProductosDesdeNube();
         };
 
-        function cargarProductos() {
-            const productos = JSON.parse(localStorage.getItem('raiz_productos')) || [];
+        async function descargarProductosDesdeNube() {
+            let { data, error } = await _supabase.from('productos').select('*').order('id', { ascending: true });
+            if (error) { console.error(error); return; }
+            listaProductosBD = data;
+            dibujarCatalogo();
+        }
+
+        function dibujarCatalogo() {
             const contenedor = document.getElementById('contenedor-productos');
             contenedor.innerHTML = '';
-
-            productos.forEach(p => {
+            listaProductosBD.forEach(p => {
                 contenedor.innerHTML += `
                     <div class="product-card bg-white p-4 flex flex-col border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                         <img src="${p.imagen}" class="w-full h-40 object-cover border-b-2 border-black mb-4">
@@ -136,179 +95,91 @@
                         <p class="text-gray-600 text-xs mb-4 flex-grow">${p.descripcion}</p>
                         <div class="border-t border-black pt-3 mt-auto">
                             <div class="flex justify-between items-center mb-3">
-                                <span class="text-[10px] font-black uppercase bg-gray-100 px-2 py-0.5 border border-black">Disponibles: ${p.stock}</span>
+                                <span class="text-[10px] font-black uppercase bg-gray-100 px-2 py-0.5 border border-black">Stock: ${p.stock}</span>
                             </div>
                             <div class="flex gap-2">
-                                ${p.stock > 0 ? 
-                                    `<button onclick="agregarAlCarrito(${p.id})" class="flex-1 bg-verdeLike border border-black py-2 font-bold hover:bg-green-400 text-[11px] uppercase tracking-wider">Agregar al carrito</button>` : 
-                                    `<button class="flex-1 bg-gray-300 border border-black py-2 font-bold cursor-not-allowed text-[11px] uppercase tracking-wider" disabled>Agotado</button>`
-                                }
-                                <button onclick="abrirModalDislike(${p.id})" class="w-10 bg-rojoDislike border border-black py-2 font-bold hover:bg-red-500 text-sm">👎</button>
+                                ${p.stock > 0 ? `<button onclick="agregarAlCarrito(${p.id})" class="flex-1 bg-verdeLike border border-black py-2 font-bold text-[11px] uppercase">Agregar</button>` : `<button class="flex-1 bg-gray-300 border border-black py-2 font-bold text-[11px] uppercase cursor-not-allowed" disabled>Agotado</button>`}
                             </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
         }
 
         function agregarAlCarrito(id) {
-            const productos = JSON.parse(localStorage.getItem('raiz_productos')) || [];
-            const producto = productos.find(p => p.id === id);
-            
-            if (!producto) return;
-
-            const itemEnCarrito = carrito.find(item => item.id === id);
-            const cantidadActual = itemEnCarrito ? itemEnCarrito.cantidad : 0;
-
-            if (cantidadActual >= producto.stock) {
-                alert("No hay suficiente stock disponible de este producto.");
-                return;
-            }
-
-            if (itemEnCarrito) {
-                itemEnCarrito.cantidad += 1;
-            } else {
-                carrito.push({ id: producto.id, nombre: producto.nombre, cantidad: 1 });
-            }
-
-            actualizarInterfazCarrito();
-        }
-
-        function eliminarDelCarrito(id) {
-            carrito = carrito.filter(item => item.id !== id);
+            const prod = listaProductosBD.find(p => p.id === id);
+            const item = carrito.find(i => i.id === id);
+            if (item && item.cantidad >= prod.stock) { alert("Sin stock suficiente"); return; }
+            if (item) item.cantidad++; else carrito.push({ id: prod.id, nombre: prod.nombre, cantidad: 1 });
             actualizarInterfazCarrito();
         }
 
         function actualizarInterfazCarrito() {
             const lista = document.getElementById('lista-carrito');
-            const totalArticulos = document.getElementById('carrito-cantidad');
-            const btnPagar = document.getElementById('btn-pagar');
-            
-            lista.innerHTML = '';
-            let sumaArticulos = 0;
+            const total = document.getElementById('carrito-cantidad');
+            const btn = document.getElementById('btn-pagar');
+            lista.innerHTML = ''; let cuenta = 0;
 
-            if (carrito.length === 0) {
-                lista.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-4">Tu carrito está vacío.</p>`;
-                btnPagar.disabled = true;
-                btnPagar.className = "w-full mt-2 bg-gray-300 text-gray-500 cursor-not-allowed border-2 border-black py-3 font-bold uppercase text-xs tracking-wider";
+            if(carrito.length === 0) {
+                lista.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-4">Vacío</p>`;
+                btn.disabled = true; btn.className = "w-full mt-2 bg-gray-300 text-gray-500 border-2 border-black py-3 font-bold uppercase text-xs";
             } else {
-                carrito.forEach(item => {
-                    sumaArticulos += item.cantidad;
-                    lista.innerHTML += `
-                        <div class="flex items-center justify-between border border-black p-2 bg-gray-50 text-xs">
-                            <div class="font-bold uppercase truncate max-w-[150px]">
-                                ${item.nombre} <span class="text-blue-600 font-black">x${item.cantidad}</span>
-                            </div>
-                            <button onclick="eliminarDelCarrito(${item.id})" class="text-red-500 hover:text-red-700 font-bold px-1">
-                                <i class="ph ph-trash text-base"></i>
-                            </button>
-                        </div>
-                    `;
+                carrito.forEach(i => {
+                    cuenta += i.cantidad;
+                    lista.innerHTML += `<div class="flex justify-between border border-black p-2 bg-gray-50 text-xs font-bold uppercase"><span>${i.nombre} x${i.cantidad}</span><button onclick="carrito=carrito.filter(x=>x.id!=${i.id});actualizarInterfazCarrito();" class="text-red-500 font-bold">X</button></div>`;
                 });
-
-                btnPagar.disabled = false;
-                btnPagar.className = "w-full mt-2 bg-azulBtn text-white border-2 border-black py-3 font-bold uppercase text-xs tracking-wider hover:opacity-90 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none";
+                btn.disabled = false; btn.className = "w-full mt-2 bg-azulBtn text-white border-2 border-black py-3 font-bold uppercase text-xs shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]";
             }
-
-            totalArticulos.innerText = sumaArticulos;
-        }
-
-        function abrirModalIntegradoQR() {
-            const contenedor = document.getElementById("canvas-qrcode");
-            contenedor.innerHTML = ""; 
-
-            const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
-
-            // OPTIMIZACIÓN EXTREMA: Formato super recortado para que NUNCA sature la memoria del QR
-            const datosOptimizado = {
-                r: "Raiz",
-                u: usuarioSesion ? usuarioSesion.correo : "anon@raiz.com",
-                p: carrito.map(i => ({ id: i.id, c: i.cantidad }))
-            };
-
-            const textoQR = JSON.stringify(datosOptimizado);
-
-            try {
-                // Motor de auto-escala máxima (Acepta hasta la versión 40 de datos)
-                const qr = qrcode(0, 'M');
-                qr.addData(textoQR);
-                qr.make();
-                
-                // Renderizado gráfico directo en formato vectorial SVG
-                contenedor.innerHTML = qr.createSvgTag({ cellSize: 3, margin: 0 });
-            } catch (e) {
-                console.error(e);
-                contenedor.innerHTML = `<p class="text-xs text-red-500 font-bold">Error al procesar QR</p>`;
-            }
-
-            const nombresDeProductos = carrito.map(i => i.nombre).join(', ');
-            document.getElementById("info-pago-qr").innerText = `Carrito: ${nombresDeProductos}`;
+            total.innerText = cuenta;
         }
 
         function abrirModalPago() {
             document.getElementById('modal-pago-qr').classList.remove('hidden');
-            abrirModalIntegradoQR();
+            const contenedorQR = document.getElementById("canvas-qrcode");
+            contenedorQR.innerHTML = "";
+
+            // Formato Ultra-optimizado para Puntos:
+            // u: usuario (correo), p: cantidad de puntos (1 punto por artículo comprado)
+            let totalArticulos = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+            
+            const datosPuntos = {
+                o: "RAIZ",
+                u: usuarioSesion.correo,
+                p: totalArticulos // Gana 1 punto por cada producto que lleva
+            };
+
+            const stringQR = JSON.stringify(datosPuntos);
+
+            new QRCode(contenedorQR, { text: stringQR, width: 180, height: 180 });
+            document.getElementById("info-pago-qr").innerText = `Ganarás: ${totalArticulos} Puntos`;
         }
 
-        function cerrarModalPago() {
-            document.getElementById('modal-pago-qr').classList.add('hidden');
+        async function confirmarVentaNube() {
+            let totalArticulos = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+            let nombresProductos = carrito.map(i => `${i.nombre} (x${i.cantidad})`).join(", ");
+
+            // 1. Guardar en el historial de la tabla 'compras' en Supabase
+            const { error: errorHistorial } = await _supabase.from('compras').insert([{
+                correo_usuario: usuarioSesion.correo,
+                productos_comprados: nombresProductos,
+                total_articulos: totalArticulos,
+                puntos_ganados: totalArticulos
+            }]);
+
+            if (errorHistorial) { alert("Error al registrar historial"); return; }
+
+            // 2. Descontar Stock de los productos
+            for (const item of carrito) {
+                const prodOriginal = listaProductosBD.find(p => p.id === item.id);
+                const nuevoStock = prodOriginal.stock - item.cantidad;
+                await _supabase.from('productos').update({ stock: nuevoStock }).eq('id', item.id);
+            }
+
+            alert("¡Compra procesada! Tu historial y stock se actualizaron en la nube.");
+            carrito = []; cerrarModalPago(); actualizarInterfazCarrito(); descargarProductosDesdeNube();
         }
 
-        function simularConfirmacionDesdeApp() {
-            let productos = JSON.parse(localStorage.getItem('raiz_productos'));
-            let compras = JSON.parse(localStorage.getItem('raiz_compras'));
-            const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
-
-            carrito.forEach(item => {
-                const index = productos.findIndex(p => p.id === item.id);
-                if (index !== -1) {
-                    productos[index].stock -= item.cantidad;
-                    
-                    compras.push({
-                        correoUsuario: usuarioSesion.correo,
-                        idProducto: item.id,
-                        producto: item.nombre,
-                        cantidad: item.cantidad,
-                        fecha: new Date().toLocaleDateString('es-MX')
-                    });
-                }
-            });
-
-            localStorage.setItem('raiz_productos', JSON.stringify(productos));
-            localStorage.setItem('raiz_compras', JSON.stringify(compras));
-
-            alert("¡Inventario actualizado de manera local! Ahora puedes escanear el código con tu app móvil.");
-            carrito = [];
-            cerrarModalPago();
-            actualizarInterfazCarrito();
-            cargarProductos();
-        }
-
-        function abrirModalDislike(id) {
-            document.getElementById('id-producto-dislike').value = id;
-            document.getElementById('modal-dislike').classList.remove('hidden');
-        }
-
-        function cerrarModalDislike() {
-            document.getElementById('modal-dislike').classList.add('hidden');
-            document.getElementById('form-dislike').reset();
-        }
-
-        function enviarDislike(event) {
-            event.preventDefault();
-            alert("Feedback enviado.");
-            cerrarModalDislike();
-        }
-
-        function cerrarSesion() {
-            localStorage.removeItem('usuario_logueado');
-            window.location.href = "index.html";
-        }
-
-        // ==========================================================
-        // MOTOR GRÁFICO AUTOMÁTICO DE ALTA CAPACIDAD (V1 - V40)
-        // ==========================================================
-        function qrcode(t,e){var r=4,n=1,o=2,i=4,a=8,u=function(t,e){var r=t,n=u[e],o=null,i=0,a=null,c=[],f=[],s=function(t,e){r=t,a=n[e],o=4*r+17,i=function(t){for(var e=new Array(t),r=0;r<t;r++)e[r]=new Array(t);return e}(o),h(0,0),h(o-7,0),h(0,o-7),d(),v(),m(a)};var h=function(t,e){for(var r=-1;r<=7;r++)if(!(t+r<0||o<=t+r))for(var n=-1;n<=7;n++)e+n<0||o<=e+n||(0<=r&&r<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==r||6==r)||2<=r&&r<=4&&2<=n&&n<=4?(i[t+r][e+n]=!0,c[t+r][e+n]=!0):(i[t+r][e+n]=!1,c[t+r][e+n]=!0))},d=function(){for(var t=8;t<o-8;t++)null==i[t][6]&&(i[t][6]=t%2==0,c[t][6]=!0),null==i[6][t]&&(i[6][t]=t%2==0,c[6][t]=!0)},v=function(){for(var t=g(e),r=0;r<15;r++){var n=!((t>>r&1)==1);r<6?i[r][8]=n:r<8?i[r+1][8]=n:i[o-15+r][8]=n,r<8?i[8][o-r-1]=n:r<9?i[8][15-r-1+1]=n:i[8][15-r-1]=n}i[o-8][8]=!1},m=function(t){for(var r=0,n=0;n<15;n++){var o=!((t>>n&1)==1);n<6?i[8][n]=o:n<8?i[8][n+1]=o:i[8][o-15+n]=o,n<8?i[o-n-1][8]=o:n<9?i[15-n-1+1][8]=o:i[15-n-1]=o}i[8][o-8]=!1},g=function(t){return"M"==t?13354:"Q"==t?21522:"H"==t?30137:21523};return a={addData:function(t){var e=function(t){for(var e=0,r=0;r<t.length;r++){var n=t.charCodeAt(r);n>127?n>2047?e+=3:e+=2:e++}return e}(t);f.push({data:t,length:e})},make:function(){var t=function(){for(var t=1;t<40;t++){var e=f[0].length*8+4;if(e<=u.maxBits[t])return t}return 40}();s(t,0),function(){for(var t=0,e=0;e<o;e++)for(var r=0;r<o;r++)c[e][r]||(i[e][r]=((t+e+r)%2==0),c[e][r]=!0)}()},isDark:function(t,e){return!(t<0||o<=t||e<0||o<=e)&&i[t][e]},createSvgTag:function(t){t=t||{},t.cellSize=t.cellSize||2,t.margin=void-1===t.margin?0:t.margin;var e=o*t.cellSize+2*t.margin,r='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+e+" "+e+'" width="100%" height="100%">';r+='<rect width="100%" height="100%" fill="#ffffff"/>';for(var n=0;n<o;n++)for(var i=0;i<o;i++)this.isDark(n,i)&&(r+='<rect x="'+(i*t.cellSize+t.margin)+'" y="'+(n*t.cellSize+t.margin)+'" width="'+t.cellSize+'" height="'+t.cellSize+'" fill="#000000"/>');return r+="</svg>"}},a};return u.maxBits=[0,152,272,440,640,864,1088,1248,1552,1856,2192,2592,2960,3424,3680,4184,4712,5176,5768,6360,6888,7456,8048,8752,9392,10208,10960,11744,12248,13048,13880,14744,15640,16568,17248,18096,19112,20016,20912,22136,23312],u[0]=[0,26,44,70,100,134,172,196,242,292,346,404,466,532,581,641,719,797,875,963,1051,1131,1221,1321,1425,1533,1645,1761,1815,1935,2063,2199,2339,2487,2581,2701,2837,2977,3125,3305,3485],u}(t,e)}
+        function cerrarModalPago() { document.getElementById('modal-pago-qr').classList.add('hidden'); }
+        function cerrarSesion() { localStorage.removeItem('usuario_logueado'); window.location.href = "index.html"; }
     </script>
 </body>
 </html>
