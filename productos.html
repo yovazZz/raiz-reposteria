@@ -66,13 +66,13 @@
             <p class="text-xs text-gray-600 mb-6 uppercase font-bold">Abre la App móvil en tu celular, enciende la cámara y escanea este código para recibir tus puntos al instante.</p>
             
             <div class="p-2 bg-white border-2 border-black shadow-sm mb-4 flex items-center justify-center mx-auto w-[212px] h-[212px]">
-                <div id="canvas-qrcode" class="w-[190px] h-[190px]"></div>
+                <div id="canvas-qrcode" class="w-[190px] h-[190px] flex items-center justify-center"></div>
             </div>
             
-            <p id="info-pago-qr" class="text-[11px] font-black uppercase text-blue-600 tracking-wider mb-6"></p>
+            <p id="info-pago-qr" class="text-[11px] font-black uppercase text-blue-600 tracking-wider mb-6 px-2 break-words"></p>
 
             <div class="flex flex-col gap-2">
-                <button onclick="simularConfirmacionDesdeApp()" class="w-full bg-verdeLike border-2 border-black py-3 font-bold hover:opacity-90 uppercase text-xs">
+                <button onclick="simularConfirmacionDesdeApp()" class="w-full bg-verdeLike border-2 border-black py-3 font-bold hover:opacity-90 uppercase text-xs shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                     Confirmar Venta y Descontar Stock
                 </button>
                 <button onclick="cerrarModalPago()" class="w-full border-2 border-black py-2 font-bold hover:bg-gray-100 uppercase text-[11px] text-gray-500">
@@ -215,11 +215,10 @@
 
         function abrirModalIntegradoQR() {
             const contenedor = document.getElementById("canvas-qrcode");
-            contenedor.innerHTML = ""; // Limpiar contenido previo
+            contenedor.innerHTML = ""; 
 
             const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
 
-            // Construir los datos de la compra
             const datosObj = {
                 origen: "Raiz Repostería",
                 accion: "compra_carrito",
@@ -230,15 +229,17 @@
 
             const textoQR = JSON.stringify(datosObj);
 
-            // EJECUTAR EL GENERADOR LOCAL INTEGRADO (No depende de servidores ni descargas externas)
             try {
-                const qr = MiniQRCode(0, 'L');
+                // Instanciar el motor QR de escala automática integrado abajo
+                const qr = qrcode(0, 'M');
                 qr.addData(textoQR);
                 qr.make();
-                contenedor.innerHTML = qr.createSvgTag(5, 0); // Genera un SVG perfecto y nítido
+                
+                // Crea una etiqueta SVG pura, autoadaptable y sin llamadas externas
+                contenedor.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0 });
             } catch (e) {
-                console.error("Error generando QR:", e);
-                contenedor.innerHTML = `<p class="text-xs text-red-500">Error al generar QR</p>`;
+                console.error(e);
+                contenedor.innerHTML = `<p class="text-xs text-red-500 font-bold">Error generando gráfico</p>`;
             }
 
             const nombresDeProductos = carrito.map(i => i.nombre).join(', ');
@@ -305,11 +306,10 @@
             window.location.href = "index.html";
         }
 
-        // ==========================================
-        // MINI-LIBRERÍA INTEGRADA PARA CÓDIGOS QR
-        // Totalmente autónoma y compatible con GitHub Pages
-        // ==========================================
-        function MiniQRCode(TypeNumber,ErrorCorrectLevel){var n=TypeNumber,e=ErrorCorrectLevel,t=null,o=0,r=[],u=[];function a(e,t){n=e,o=4*n+17,r=function(n){for(var e=new Array(n),t=0;t<n;t++)e[t]=new Array(n);return e}(o),u=function(n){for(var e=new Array(n),t=0;t<n;t++)e[t]=new Array(n);return e}(o),i(),c(0,0),c(o-7,0),c(0,o-7),l(),f(),v(t)}function i(){for(var n=0;n<o;n++)for(var e=0;e<o;e++)r[n][e]=null,u[n][e]=!1}function c(n,e){for(var t=-1;t<=7;t++)if(!(n+t<0||o<=n+t))for(var r=-1;r<=7;r++)e+r<0||o<=e+r||(0<=t&&t<=6&&(0==r||6==r)||0<=r&&r<=6&&(0==t||6==t)||2<=t&&t<=4&&2<=r&&r<=4?(r[n+t][e+r]=!0,u[n+t][e+r]=!0):(r[n+t][e+r]=!1,u[n+t][e+r]=!0))}function l(){for(var n=8;n<o-8;n++)null==r[n][6]&&(r[n][6]=n%2==0,u[n][6]=!0),null==r[6][n]&&(r[6][n]=n%2==0,u[6][n]=!0)}function f(){for(var n=s(e),t=0;t<15;t++){var i=!((n>>t&1)==1);t<6?r[t][8]=i:t<8?r[t+1][8]=i:r[o-15+t][8]=i,t<8?r[8][o-t-1]=i:t<9?r[8][15-t-1+1]=i:r[8][15-t-1]=i}r[o-8][8]=!1}function v(n){for(var e=0,t=0;t<15;t++){var i=!((n>>t&1)==1);t<6?r[8][t]=i:t<8?r[8][t+1]=i:r[8][o-15+t]=i,t<8?r[o-t-1][8]=i:t<9?r[15-t-1+1][8]=i:r[15-t-1][8]=i}r[8][o-8]=!1}function s(n){return"M"==n?13354:"Q"==n?21522:"H"==n?30137:21523}var g={};return g.addData=function(n){t=n},g.make=function(){var e=function(n){for(var e=1;e<=40;e++){var t=16,o=12,r=8;if(n.length*8<=(4*e+17)*(4*e+17)-20)return e}return 40}(t);a(e,0),function(){for(var n=0,e=0;e<o;e++)for(var t=0;t<o;t++)u[e][t]||(r[e][t]=((n+e+t)%2==0),u[e][t]=!0)}()},g.createSvgTag=function(n,e){n=n||2,e=e||0;var t=o*n+2*e,r='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+t+" "+t+'" width="100%" height="100%">';r+='<rect width="100%" height="100%" fill="#ffffff"/>';for(var u=0;u<o;u++)for(var a=0;a<o;a++)this.isDark(u,a)&&(r+='<rect x="'+(a*n+e)+'" y="'+(u*n+e)+'" width="'+n+'" height="'+n+'" fill="#000000"/>');return r+="</svg>"},g.isDark=function(n,e){return n<0||o<=n||e<0||o<=e?!1:r[n][e]},g}
+        // ==========================================================
+        // MOTOR GRÁFICO QR AUTO-ESCALABLE (NATIVO EN JAVASCRIPT)
+        // ==========================================================
+        function qrcode(t,e){var r=4,n=1,o=2,i=4,a=8,u=function(t,e){var r=t,n=u[e],o=null,i=0,a=null,c=[],f=[],s=function(t,e){r=t,a=n[e],o=4*r+17,i=function(t){for(var e=new Array(t),r=0;r<t;r++)e[r]=new Array(t);return e}(o),h(0,0),h(o-7,0),h(0,o-7),d(),v(),m(a)};var h=function(t,e){for(var r=-1;r<=7;r++)if(!(t+r<0||o<=t+r))for(var n=-1;n<=7;n++)e+n<0||o<=e+n||(0<=r&&r<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==r||6==r)||2<=r&&r<=4&&2<=n&&n<=4?(i[t+r][e+n]=!0,c[t+r][e+n]=!0):(i[t+r][e+n]=!1,c[t+r][e+n]=!0))},d=function(){for(var t=8;t<o-8;t++)null==i[t][6]&&(i[t][6]=t%2==0,c[t][6]=!0),null==i[6][t]&&(i[6][t]=t%2==0,c[6][t]=!0)},v=function(){for(var t=g(e),r=0;r<15;r++){var n=!((t>>r&1)==1);r<6?i[r][8]=n:r<8?i[r+1][8]=n:i[o-15+r][8]=n,r<8?i[8][o-r-1]=n:r<9?i[8][15-r-1+1]=n:i[8][15-r-1]=n}i[o-8][8]=!1},m=function(t){for(var r=0,n=0;n<15;n++){var o=!((t>>n&1)==1);n<6?i[8][n]=o:n<8?i[8][n+1]=o:i[8][o-15+n]=o,n<8?i[o-n-1][8]=o:n<9?i[15-n-1+1][8]=o:i[15-n-1][8]=o}i[8][o-8]=!1},g=function(t){return"M"==t?13354:"Q"==t?21522:"H"==t?30137:21523};return a={addData:function(t){var e=function(t){for(var e=0,r=0;r<t.length;r++){var n=t.charCodeAt(r);n>127?n>2047?e+=3:e+=2:e++}return e}(t);f.push({data:t,length:e})},make:function(){var t=function(){for(var t=1;t<40;t++){var e=f[0].length*8+4;if(e<=u.maxBits[t])return t}return 40}();s(t,0),function(){for(var t=0,e=0;e<o;e++)for(var r=0;r<o;r++)c[e][r]||(i[e][r]=((t+e+r)%2==0),c[e][r]=!0)}()},isDark:function(t,e){return!(t<0||o<=t||e<0||o<=e)&&i[t][e]},createSvgTag:function(t){t=t||{},t.cellSize=t.cellSize||2,t.margin=void-1===t.margin?0:t.margin;var e=o*t.cellSize+2*t.margin,r='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+e+" "+e+'" width="100%" height="100%">';r+='<rect width="100%" height="100%" fill="#ffffff"/>';for(var n=0;n<o;n++)for(var i=0;i<o;i++)this.isDark(n,i)&&(r+='<rect x="'+(i*t.cellSize+t.margin)+'" y="'+(n*t.cellSize+t.margin)+'" width="'+t.cellSize+'" height="'+t.cellSize+'" fill="#000000"/>');return r+="</svg>"}},a};return u.maxBits=[0,152,272,440,640,864,1088,1248,1552,1856,2192,2592,2960,3424,3680,4184,4712,5176,5768,6360,6888,7456,8048,8752,9392,10208,10960,11744,12248,13048,13880,14744,15640,16568,17248,18096,19112,20016,20912,22136,23312],u[0]=[0,26,44,70,100,134,172,196,242,292,346,404,466,532,581,641,719,797,875,963,1051,1131,1221,1321,1425,1533,1645,1761,1815,1935,2063,2199,2339,2487,2581,2701,2837,2977,3125,3305,3485],u}(t,e)}
     </script>
 </body>
 </html>
