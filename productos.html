@@ -14,9 +14,8 @@
     <style>
         body { background-color: #fef5d4; font-family: sans-serif; color: #111; }
         .product-card, .neo-box { border: 2px solid black; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .product-card:hover { transform: translateY(-6px) translateX(-2px); id: shadow-change; box-shadow: 7px 7px 0px 0px rgba(0,0,0,1); }
+        .product-card:hover { transform: translateY(-6px) translateX(-2px); box-shadow: 7px 7px 0px 0px rgba(0,0,0,1); }
         
-        /* Animación suave de entrada para los productos */
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
@@ -31,7 +30,7 @@
             <i class="ph ph-cookie text-amber-600 animate-spin" style="animation-duration: 20s"></i> Raíz Repostería
         </div>
         <div class="flex items-center gap-4">
-            <button onclick="cerrarSesion()" class="bg-red-50 text-red-600 border border-red-400 font-bold text-[10px] px-3 py-1.5 uppercase hover:bg-red-200 transition-all duration-200 active:translate-y-0.5">Salir</button>
+            <span id="usuario-badge" class="text-[10px] font-black uppercase bg-black text-white px-2.5 py-1 border border-black rounded-sm">Sucursal Abierta</span>
         </div>
     </header>
 
@@ -80,8 +79,14 @@
         let usuarioSesion = null;
 
         window.onload = function() {
+            // 🚀 MODIFICACIÓN CRÍTICA: Quitamos el "window.location.href" para que ya no te eche a index.html
             usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
-            if (!usuarioSesion) { window.location.href = "index.html"; return; }
+            
+            // Si hay un usuario administrador en sesión, lo mostramos en el badge superior.
+            if (usuarioSesion && usuarioSesion.nombre) {
+                document.getElementById('usuario-badge').innerText = `Encargado: ${usuarioSesion.nombre}`;
+            }
+            
             descargarProductosDesdeNube();
         };
 
@@ -96,7 +101,6 @@
             const contenedor = document.getElementById('contenedor-productos');
             contenedor.innerHTML = '';
             listaProductosBD.forEach((p, index) => {
-                // Insertamos retraso de animación escalonada para un toque refinado
                 contenedor.innerHTML += `
                     <div class="product-card bg-white p-4 flex flex-col border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-fade-in-up" style="animation-delay: ${index * 70}ms">
                         <div class="overflow-hidden border-b-2 border-black mb-4 h-40">
@@ -120,10 +124,9 @@
             const prod = listaProductosBD.find(p => p.id === id);
             const item = carrito.find(i => i.id === id);
             if (item && item.cantidad >= prod.stock) { alert("Sin stock suficiente en vitrina"); return; }
-            if (item) item.cantidad++; else carrito.push({ id: prod.id, nombre: prod.nombre, cantidad: 1 });
+            if (item) item.cantidad++; else carrito.push({ id: prod.id, nombre: prod.nombre, Pattern, cantidad: 1 });
             actualizarInterfazCarrito();
             
-            // Animación flash en el contador de artículos
             const contador = document.getElementById('carrito-cantidad');
             contador.classList.add('scale-125', 'bg-amber-600');
             setTimeout(() => contador.classList.remove('scale-125', 'bg-amber-600'), 200);
@@ -172,10 +175,10 @@
             let nombresProductos = carrito.map(i => `${i.nombre} (x${i.cantidad})`).join(", ");
             
             try {
-                // 🛠️ RESOLUCIÓN CORRECTA PARA EVITAR EL ERROR DE SESIÓN DE LA IMAGEN:
+                // Generamos los datos limpios. Si no hay sesión iniciada, usa el correo general de la tienda.
                 const datosQR = {
                     o: "RAIZ",
-                    u: "sucursal@raiz.com",
+                    u: usuarioSesion ? usuarioSesion.correo : "sucursal@raiz.com",
                     p: totalArticulos,
                     d: nombresProductos
                 };
@@ -205,8 +208,6 @@
             alert("✨ ¡Venta procesada con éxito y stock descontado del obrador!");
             carrito = []; cerrarModalPago(); actualizarInterfazCarrito(); descargarProductosDesdeNube();
         }
-
-        function cerrarSesion() { localStorage.removeItem('usuario_logueado'); window.location.href = "index.html"; }
     </script>
 </body>
 </html>
