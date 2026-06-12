@@ -23,15 +23,21 @@
     <div id="pantalla-login" class="w-full max-w-md p-6 flex flex-col gap-6 my-auto hidden">
         <div class="bg-white p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-center">
             <h1 class="text-3xl font-black uppercase italic tracking-tight mb-2">Raíz Club</h1>
-            <p class="text-xs font-bold text-gray-500 uppercase mb-6">Ingresa tu correo para ver tus puntos</p>
+            <p class="text-xs font-bold text-gray-500 uppercase mb-6">Inicia sesión para ver tus puntos</p>
             
             <form onsubmit="iniciarSesionMovil(event)" class="flex flex-col gap-4 text-left">
                 <div class="flex flex-col gap-1">
                     <label class="text-xs font-black uppercase">Correo Electrónico:</label>
-                    <input type="email" id="login-correo" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold">
+                    <input type="email" id="login-correo" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="tu@correo.com">
                 </div>
-                <button type="submit" class="bg-azulBtn text-white font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mt-2">
-                    Entrar a mi App
+                
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-black uppercase">Contraseña:</label>
+                    <input type="password" id="login-contrasena" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="••••••••">
+                </div>
+
+                <button type="submit" id="btn-login" class="bg-azulBtn text-white font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mt-2 flex justify-center items-center gap-2">
+                    <span>Entrar a mi App</span>
                 </button>
             </form>
         </div>
@@ -122,12 +128,45 @@
             }
         };
 
-        function iniciarSesionMovil(e) {
+        // 🚀 ACTUALIZADO: Valida tanto el correo como la contraseña en Supabase
+        async function iniciarSesionMovil(e) {
             e.preventDefault();
-            const correo = document.getElementById('login-correo').value.trim().toLowerCase();
-            if(!correo) return;
-            localStorage.setItem('app_movil_correo', correo);
-            usuarioEmailLogueado = correo;
+            const btn = document.getElementById('btn-login');
+            const correoInput = document.getElementById('login-correo').value.trim().toLowerCase();
+            const contrasenaInput = document.getElementById('login-contrasena').value.trim();
+            
+            if(!correoInput || !contrasenaInput) return;
+
+            btn.disabled = true;
+            btn.innerHTML = `<span>Validando credenciales...</span>`;
+
+            // Consultamos buscando coincidencia exacta de CORREO y CONTRASEÑA
+            let { data: usuarioEncontrado, error } = await _supabase
+                .from('usuarios')
+                .select('*')
+                .eq('correo', correoInput)
+                .eq('contrasena', contrasenaInput) // Filtro adicional de contraseña
+                .maybeSingle();
+
+            if (error) {
+                console.error(error);
+                alert("Error de conexión con la base de datos.");
+                btn.disabled = false;
+                btn.innerHTML = `<span>Entrar a mi App</span>`;
+                return;
+            }
+
+            // Si los datos no coinciden o no existen
+            if (!usuarioEncontrado) {
+                alert("❌ Correo o contraseña incorrectos. Verifica tus datos.");
+                btn.disabled = false;
+                btn.innerHTML = `<span>Entrar a mi App</span>`;
+                return;
+            }
+
+            // Si todo está bien, le permitimos el acceso
+            localStorage.setItem('app_movil_correo', correoInput);
+            usuarioEmailLogueado = correoInput;
             document.getElementById('pantalla-login').classList.add('hidden');
             mostrarAppPrincipal();
         }
@@ -178,31 +217,23 @@
             document.getElementById('app-puntos-total').innerText = sumaPuntos;
         }
 
-        // 🚀 MEJORA ABSOLUTA: Función asíncrona blindada para navegación limpia sin trabas de cámara
         async function cambiarPestaña(destino) {
             const tabInicioContenido = document.getElementById('tab-inicio-contenido');
             const tabEscanearContenido = document.getElementById('tab-escanear-contenido');
             const btnInicio = document.getElementById('btn-tab-inicio');
             const btnEscanear = document.getElementById('btn-tab-escanear');
 
-            // Si cambiamos a otra pestaña y el escáner está activo, lo apagamos forzosamente primero
             if (destino !== 'escanear' && html5QrcodeScanner) {
-                try {
-                    await html5QrcodeScanner.stop();
-                } catch (e) {
-                    console.log("Cámara ya estaba cerrada o deteniéndose.");
-                }
-                html5QrcodeScanner = null; // Liberamos la variable por completo
+                try { await html5QrcodeScanner.stop(); } catch (e) {}
+                html5QrcodeScanner = null; 
                 document.getElementById('texto-estado').innerHTML = "Cámara apagada";
             }
 
-            // Cambiamos los elementos visibles de la pantalla
             if (destino === 'inicio') {
                 tabInicioContenido.classList.remove('hidden');
                 tabEscanearContenido.classList.add('hidden');
                 btnInicio.className = "flex flex-col items-center justify-center flex-1 h-full text-blue-600";
                 btnEscanear.className = "flex flex-col items-center justify-center flex-1 h-full text-gray-400";
-                // Ejecuta la consulta a Supabase para cargar puntos e historial actualizados
                 await obtenerPuntosTotalesNube();
             } else if (destino === 'escanear') {
                 tabInicioContenido.classList.add('hidden');
@@ -214,8 +245,6 @@
 
         function encenderEscanerMovil() {
             document.getElementById('texto-estado').innerHTML = `<span class="text-blue-500"><i class="ph ph-camera animate-pulse"></i> Encendiendo lente...</span>`;
-            
-            // Si ya existía una instancia previa, intentamos destruirla para que no haga conflicto
             if(html5QrcodeScanner) {
                 html5QrcodeScanner.stop().catch(() => {}).then(() => iniciarInstanciaCamara());
             } else {
@@ -238,55 +267,50 @@
         }
 
         async function alDetectarCodigoQR(decodedText) {
-    // Detenemos el escáner de inmediato para que no lea múltiples veces el mismo QR
-    if (html5QrcodeScanner) { 
-        try { await html5QrcodeScanner.stop(); } catch(e){}
-        html5QrcodeScanner = null;
-    }
-    
-    const estado = document.getElementById('texto-estado');
-    
-    try {
-        const datosQR = JSON.parse(decodedText);
-
-        if (datosQR.o === "RAIZ") {
-            estado.innerHTML = `<span class="text-yellow-600 font-bold"><i class="ph ph-cloud-arrow-up animate-bounce"></i> PROCESANDO COMPRA...</span>`;
-            
-            let fechaHoy = new Date().toLocaleDateString('es-MX');
-
-            // 🚀 CORRECCIÓN AQUÍ: Cambiamos 'datosQR.u' por 'usuarioEmailLogueado' 
-            // para que los puntos se guarden en el correo de la app del celular.
-            const { error: errorBaseDatos } = await _supabase.from('compras').insert([{
-                correo_usuario: usuarioEmailLogueado, 
-                productos_comprados: datosQR.d || "Compra en Sucursal",
-                total_articulos: datosQR.p,
-                puntos_ganados: datosQR.p,
-                fecha: fechaHoy
-            }]);
-
-            if (errorBaseDatos) {
-                console.error(errorBaseDatos);
-                alert("Error al guardar en la tabla compras de Supabase.");
-                estado.innerHTML = `<span class="text-red-500">Error de guardado</span>`;
-                return;
+            if (html5QrcodeScanner) { 
+                try { await html5QrcodeScanner.stop(); } catch(e){}
+                html5QrcodeScanner = null;
             }
             
-            // Avisamos mostrando los puntos al usuario real
-            alert(`¡COMPRA REGISTRADA!\n\nAsignada a: ${usuarioEmailLogueado}\nPuntos acumulados: +${datosQR.p} pts.`);
+            const estado = document.getElementById('texto-estado');
             
-            // Redirección inmediata y limpia al menú de inicio
-            document.getElementById('texto-estado').innerHTML = "Cámara apagada";
-            cambiarPestaña('inicio');
+            try {
+                const datosQR = JSON.parse(decodedText);
 
-        } else {
-            alert("QR no reconocido.");
-            estado.innerHTML = `<span class="text-red-500">Código Inválido</span>`;
+                if (datosQR.o === "RAIZ") {
+                    estado.innerHTML = `<span class="text-yellow-600 font-bold"><i class="ph ph-cloud-arrow-up animate-bounce"></i> PROCESANDO COMPRA...</span>`;
+                    
+                    let fechaHoy = new Date().toLocaleDateString('es-MX');
+
+                    const { error: errorBaseDatos } = await _supabase.from('compras').insert([{
+                        correo_usuario: usuarioEmailLogueado,
+                        productos_comprados: datosQR.d || "Compra en Sucursal",
+                        total_articulos: datosQR.p,
+                        puntos_ganados: datosQR.p,
+                        fecha: fechaHoy
+                    }]);
+
+                    if (errorBaseDatos) {
+                        console.error(errorBaseDatos);
+                        alert("Error al guardar en la tabla compras de Supabase.");
+                        estado.innerHTML = `<span class="text-red-500">Error de guardado</span>`;
+                        return;
+                    }
+                    
+                    alert(`¡COMPRA REGISTRADA!\n\nUsuario: ${usuarioEmailLogueado}\nPuntos acumulados: +${datosQR.p} pts.`);
+                    
+                    document.getElementById('texto-estado').innerHTML = "Cámara apagada";
+                    cambiarPestaña('inicio');
+
+                } else {
+                    alert("QR no reconocido.");
+                    estado.innerHTML = `<span class="text-red-500">Código Inválido</span>`;
+                }
+            } catch (e) {
+                alert("Formato de QR incorrecto.");
+                estado.innerHTML = `<span class="text-red-500">Error de lectura</span>`;
+            }
         }
-    } catch (e) {
-        alert("Formato de QR incorrecto.");
-        estado.innerHTML = `<span class="text-red-500">Error de lectura</span>`;
-    }
-}
 
         function cerrarSesionMovil() {
             localStorage.removeItem('app_movil_correo');

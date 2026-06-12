@@ -23,7 +23,6 @@
     <header class="p-4 border-b-2 border-black flex items-center justify-between bg-crema px-6">
         <div class="font-bold uppercase tracking-tighter italic text-xl">Raíz Repostería</div>
         <div class="flex items-center gap-4">
-            <span id="usuario-nombre" class="text-xs font-black uppercase text-gray-700 bg-white px-3 py-1.5 border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">Cargando...</span>
             <button onclick="cerrarSesion()" class="bg-red-100 text-red-600 border border-red-400 font-bold text-[10px] px-3 py-1.5 uppercase hover:bg-red-200">Salir</button>
         </div>
     </header>
@@ -73,12 +72,11 @@
         window.onload = function() {
             usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
             if (!usuarioSesion) { window.location.href = "index.html"; return; }
-            document.getElementById('usuario-nombre').innerText = "Hola, " + usuarioSesion.nombre;
+            // Se mantiene la validación interna de la sesión pero ya no se inyecta en el HTML de forma visible
             descargarProductosDesdeNube();
         };
 
         async function descargarProductosDesdeNube() {
-            // Alineado con tus nuevas columnas id e imagen
             let { data, error } = await _supabase.from('productos').select('*').order('id', { ascending: true });
             if (error) { console.error(error); return; }
             listaProductosBD = data;
@@ -141,7 +139,6 @@
             let totalArticulos = carrito.reduce((sum, item) => sum + item.cantidad, 0);
             let nombresProductos = carrito.map(i => `${i.nombre} (x${i.cantidad})`).join(", ");
             
-            // Tratamiento de errores blindado para prevenir fallos en renderizado del canvas
             try {
                 const datosQR = {
                     o: "RAIZ",
@@ -165,7 +162,7 @@
                 await _supabase.from('productos').update({ stock: nuevoStock }).eq('id', item.id);
             }
 
-            alert("¡Inventario Descontado! Listo para el escaneo móvil del cliente.");
+            alert("¡Inventario Descontado! ");
             carrito = []; cerrarModalPago(); actualizarInterfazCarrito(); descargarProductosDesdeNube();
         }
 
