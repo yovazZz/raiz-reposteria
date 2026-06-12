@@ -6,7 +6,6 @@
     <title>Panel - Raíz Repostería</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         tailwind.config = { theme: { extend: { colors: { crema: '#fef5d4', verdeLike: '#9bf08b', rojoDislike: '#ff7b7b', azulBtn: '#2b88ff' } } } }
     </script>
@@ -66,8 +65,8 @@
             <h3 class="text-2xl font-bold mb-2 uppercase italic">Pagar Compra</h3>
             <p class="text-xs text-gray-600 mb-6 uppercase font-bold">Abre la App móvil en tu celular, enciende la cámara y escanea este código para recibir tus puntos al instante.</p>
             
-            <div class="p-4 bg-white border-2 border-black shadow-sm mb-4 flex items-center justify-center mx-auto w-[212px] h-[212px]">
-                <div id="canvas-qrcode"></div>
+            <div class="p-2 bg-white border-2 border-black shadow-sm mb-4 flex items-center justify-center mx-auto w-[212px] h-[212px]">
+                <img id="img-qrcode" class="w-full h-full object-contain" alt="Código QR de pago">
             </div>
             
             <p id="info-pago-qr" class="text-[11px] font-black uppercase text-blue-600 tracking-wider mb-6"></p>
@@ -214,30 +213,24 @@
             totalArticulos.innerText = sumaArticulos;
         }
 
-        // NUEVA FUNCIÓN CAMBIADA: EMPAQUETA TODO EL CONTENIDO PARA EL CAMBIO DE DISPOSITIVOS
+        // SOLUCIÓN AL PROBLEMA DEL QR VACÍO EN GITHUB PAGES
         function abrirModalIntegradoQR() {
-            const contenedorQR = document.getElementById("canvas-qrcode");
-            contenedorQR.innerHTML = "";
-
             const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
 
-            // Construimos un JSON con la información completa que necesita la App del Celular
-            const datosQR = JSON.stringify({
+            const datosObj = {
                 origen: "Raiz Repostería",
                 accion: "compra_carrito",
                 correoUsuario: usuarioSesion ? usuarioSesion.correo : "anonimo@raiz.com",
                 fecha: new Date().toLocaleDateString('es-MX'),
                 productos: carrito.map(i => ({ id: i.id, nombre: i.nombre, cant: i.cantidad }))
-            });
+            };
 
-            new QRCode(contenedorQR, {
-                text: datosQR,
-                width: 180,
-                height: 180,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
+            const datosTextoURLEncoded = encodeURIComponent(JSON.stringify(datosObj));
+            
+            // Usamos la API pública y nativa de QR que no falla jamás al renderizar imágenes en GitHub
+            const urlQR = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${datosTextoURLEncoded}`;
+            
+            document.getElementById("img-qrcode").src = urlQR;
 
             const nombresDeProductos = carrito.map(i => i.nombre).join(', ');
             document.getElementById("info-pago-qr").innerText = `Carrito: ${nombresDeProductos}`;
@@ -275,7 +268,7 @@
             localStorage.setItem('raiz_productos', JSON.stringify(productos));
             localStorage.setItem('raiz_compras', JSON.stringify(compras));
 
-            alert("¡Inventario actualizado de manera local! Ahora escanea el código con tu app móvil para guardar tus puntos.");
+            alert("¡Inventario actualizado de manera local! Ahora puedes escanear el código con tu app móvil.");
             carrito = [];
             cerrarModalPago();
             actualizarInterfazCarrito();
