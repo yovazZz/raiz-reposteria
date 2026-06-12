@@ -79,14 +79,10 @@
         let usuarioSesion = null;
 
         window.onload = function() {
-            // 🚀 MODIFICACIÓN CRÍTICA: Quitamos el "window.location.href" para que ya no te eche a index.html
             usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
-            
-            // Si hay un usuario administrador en sesión, lo mostramos en el badge superior.
             if (usuarioSesion && usuarioSesion.nombre) {
                 document.getElementById('usuario-badge').innerText = `Encargado: ${usuarioSesion.nombre}`;
             }
-            
             descargarProductosDesdeNube();
         };
 
@@ -124,7 +120,14 @@
             const prod = listaProductosBD.find(p => p.id === id);
             const item = carrito.find(i => i.id === id);
             if (item && item.cantidad >= prod.stock) { alert("Sin stock suficiente en vitrina"); return; }
-            if (item) item.cantidad++; else carrito.push({ id: prod.id, nombre: prod.nombre, Pattern, cantidad: 1 });
+            
+            // 🚀 CORREGIDO: Eliminamos el texto "Pattern" erróneo que rompía el código aquí
+            if (item) {
+                item.cantidad++;
+            } else {
+                carrito.push({ id: prod.id, nombre: prod.nombre, cantidad: 1 });
+            }
+            
             actualizarInterfazCarrito();
             
             const contador = document.getElementById('carrito-cantidad');
@@ -175,7 +178,6 @@
             let nombresProductos = carrito.map(i => `${i.nombre} (x${i.cantidad})`).join(", ");
             
             try {
-                // Generamos los datos limpios. Si no hay sesión iniciada, usa el correo general de la tienda.
                 const datosQR = {
                     o: "RAIZ",
                     u: usuarioSesion ? usuarioSesion.correo : "sucursal@raiz.com",
