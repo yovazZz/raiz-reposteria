@@ -15,7 +15,6 @@
         body { background-color: #fef5d4; font-family: sans-serif; color: #111; -webkit-tap-highlight-color: transparent; }
         .neo-box { border: 3px solid black; }
         .neo-card { border: 2px solid black; }
-        /* Ocultar barra de scroll para emular una app nativa */
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -38,7 +37,7 @@
         </div>
     </div>
 
-    <div id="app-principal" class="w-full max-w-md p-4 flex flex-col gap-6 hidden">
+    <div id="app-principal" class="w-full max-w-md p-4 flex flex-col gap-6 hidden overflow-y-auto max-h-screen">
         
         <header class="flex items-center justify-between p-2 bg-white neo-card shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] px-4">
             <div class="font-black uppercase tracking-tighter italic text-lg">Raíz Repostería</div>
@@ -64,9 +63,13 @@
                 </div>
             </div>
 
-            <div class="bg-white p-4 neo-card shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-center">
-                <p class="text-xs font-bold uppercase text-gray-700">🍰 ¡Cada producto comprado te suma 1 punto!</p>
-                <p class="text-[10px] text-gray-500 uppercase mt-1">Canjea tus puntos en caja por postres gratis.</p>
+            <div class="bg-white p-4 neo-box shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-3">
+                <h3 class="font-black uppercase italic text-sm border-b-2 border-black pb-1 flex items-center gap-1">
+                    <i class="ph ph-clock-counter-clockwise"></i> Mis Compras Recientes
+                </h3>
+                <div id="contenedor-historial" class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                    <p class="text-xs text-gray-500 italic text-center py-2">Cargando tus compras...</p>
+                </div>
             </div>
         </div>
 
@@ -137,17 +140,43 @@
         }
 
         async function obtenerPuntosTotalesNube() {
-            // Consulta directa a tu tabla 'compras' para mapear los puntos ganados
+            // Jalamos toda la información de las compras de este usuario ordenadas por ID descendente (la más nueva arriba)
             let { data: comprasEfectuadas, error } = await _supabase
                 .from('compras')
-                .select('puntos_ganados')
-                .eq('correo_usuario', usuarioEmailLogueado);
+                .select('*')
+                .eq('correo_usuario', usuarioEmailLogueado)
+                .order('id', { ascending: false });
 
-            if (error) { console.error(error); return; }
-            let sumaPuntos = 0;
-            if (comprasEfectuadas) {
-                sumaPuntos = comprasEfectuadas.reduce((total, fila) => total + (fila.puntos_ganados || 0), 0);
+            if (error) { 
+                console.error(error); 
+                document.getElementById('contenedor-historial').innerHTML = `<p class="text-xs text-red-500 font-bold text-center">Error al conectar historial</p>`;
+                return; 
             }
+            
+            let sumaPuntos = 0;
+            const contenedorHistorial = document.getElementById('contenedor-historial');
+            contenedorHistorial.innerHTML = "";
+
+            if (!comprasEfectuadas || comprasEfectuadas.length === 0) {
+                document.getElementById('app-puntos-total').innerText = "0";
+                contenedorHistorial.innerHTML = `<p class="text-xs text-gray-400 italic text-center py-4">Aún no registras compras</p>`;
+                return;
+            }
+
+            // Calculamos los puntos e imprimimos la fila del historial dinámicamente
+            comprasEfectuadas.forEach(fila => {
+                sumaPuntos += (fila.puntos_ganados || 0);
+                
+                contenedorHistorial.innerHTML += `
+                    <div class="border border-black p-2 bg-gray-50 flex flex-col gap-0.5 text-[11px]">
+                        <div class="flex justify-between items-center font-black text-gray-500 uppercase text-[9px]">
+                            <span><i class="ph ph-calendar-blank"></i> ${fila.fecha || 'Reciente'}</span>
+                            <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 border border-amber-300 font-black rounded-sm">+${fila.puntos_ganados} PTS</span>
+                        </div>
+                        <p class="font-bold uppercase text-gray-800 tracking-tight leading-tight mt-0.5">${fila.productos_comprados}</p>
+                    </div>`;
+            });
+
             document.getElementById('app-puntos-total').innerText = sumaPuntos;
         }
 
@@ -190,9 +219,8 @@
         }
 
         async function alDetectarCodigoQR(decodedText) {
-            // 🛑 Detenemos la cámara primero para evitar bucles repetitivos de lectura
             if (html5QrcodeScanner) { 
-                await html5QrcodeScanner.stop().catch(e => console.log("Cámara ya liberada")); 
+                await html5QrcodeScanner.stop().catch(e => console.log("Cámara liberada")); 
             }
             
             const estado = document.getElementById('texto-estado');
@@ -205,7 +233,6 @@
                     
                     let fechaHoy = new Date().toLocaleDateString('es-MX');
 
-                    // Sincronizado para escribir directamente en tu tabla 'compras'
                     const { error: errorBaseDatos } = await _supabase.from('compras').insert([{
                         correo_usuario: datosQR.u,
                         productos_comprados: datosQR.d || "Compra en Sucursal",
@@ -223,7 +250,6 @@
                     
                     alert(`¡COMPRA REGISTRADA!\n\nUsuario: ${datosQR.u}\nPuntos acumulados: +${datosQR.p} pts.`);
                     
-                    // 🚀 SOLUCIÓN: Retraso controlado para permitir que la interfaz se refresque e impida congelamientos
                     setTimeout(() => {
                         document.getElementById('texto-estado').innerHTML = "Cámara apagada";
                         cambiarPestaña('inicio');
