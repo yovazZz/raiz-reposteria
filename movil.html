@@ -36,10 +36,46 @@
                     <input type="password" id="login-contrasena" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="••••••••">
                 </div>
 
-                <button type="submit" id="btn-login" class="bg-azulBtn text-white font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mt-2 flex justify-center items-center gap-2">
+                <button type="submit" id="btn-login" class="w-full bg-azulBtn text-white font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mt-2 flex justify-center items-center gap-2">
                     <span>Entrar a mi App</span>
                 </button>
             </form>
+
+            <button onclick="mostrarFormularioRegistro()" class="text-xs font-black uppercase text-blue-600 underline mt-6 block mx-auto hover:text-blue-800">
+                ¿No tienes cuenta? Regístrate aquí
+            </button>
+        </div>
+    </div>
+
+    <div id="pantalla-registro" class="w-full max-w-md p-6 flex flex-col gap-6 my-auto hidden">
+        <div class="bg-white p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-center">
+            <h1 class="text-3xl font-black uppercase italic tracking-tight mb-1">Únete al Club</h1>
+            <p class="text-xs font-bold text-gray-500 uppercase mb-6">Regístrate para comenzar a acumular puntos</p>
+            
+            <form onsubmit="registrarUsuarioMovil(event)" class="flex flex-col gap-4 text-left">
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-black uppercase">Tu Nombre completo:</label>
+                    <input type="text" id="registro-nombre" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="Ej. Juan Pérez">
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-black uppercase">Correo Electrónico:</label>
+                    <input type="email" id="registro-correo" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="correo@ejemplo.com">
+                </div>
+                
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-black uppercase">Crea tu Contraseña:</label>
+                    <input type="password" id="registro-contrasena" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="Mínimo 4 caracteres">
+                </div>
+
+                <button type="submit" id="btn-registro" class="w-full bg-verdeLike text-black font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mt-2 flex justify-center items-center gap-2">
+                    <span>Crear mi Cuenta Gratis</span>
+                </button>
+            </form>
+
+            <button onclick="mostrarFormularioLogin()" class="text-xs font-black uppercase text-gray-600 underline mt-6 block mx-auto hover:text-black">
+                ¿Ya tienes cuenta? Inicia sesión
+            </button>
         </div>
     </div>
 
@@ -111,7 +147,6 @@
     </nav>
 
     <script>
-        // REEMPLAZA CON TUS LLAVES REALES DE SUPABASE
         const SUPABASE_URL = "https://ksxrpcfvnnkjfriolvxs.supabase.co";
         const SUPABASE_KEY = "sb_publishable_UXlc_48QjL-VGyvspecs2w_hbPKq3Il";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -122,13 +157,23 @@
         window.onload = function() {
             usuarioEmailLogueado = localStorage.getItem('app_movil_correo');
             if (!usuarioEmailLogueado) {
-                document.getElementById('pantalla-login').classList.remove('hidden');
+                mostrarFormularioLogin();
             } else {
                 mostrarAppPrincipal();
             }
         };
 
-        // 🚀 ACTUALIZADO: Valida tanto el correo como la contraseña en Supabase
+        function mostrarFormularioLogin() {
+            document.getElementById('pantalla-registro').classList.add('hidden');
+            document.getElementById('pantalla-login').classList.remove('hidden');
+        }
+
+        function mostrarFormularioRegistro() {
+            document.getElementById('pantalla-login').classList.add('hidden');
+            document.getElementById('pantalla-registro').classList.remove('hidden');
+        }
+
+        // Acceso regular buscando coincidencias exactas de correo y contraseña
         async function iniciarSesionMovil(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-login');
@@ -138,14 +183,13 @@
             if(!correoInput || !contrasenaInput) return;
 
             btn.disabled = true;
-            btn.innerHTML = `<span>Validando credenciales...</span>`;
+            btn.innerHTML = `<span>Validando...</span>`;
 
-            // Consultamos buscando coincidencia exacta de CORREO y CONTRASEÑA
             let { data: usuarioEncontrado, error } = await _supabase
                 .from('usuarios')
                 .select('*')
                 .eq('correo', correoInput)
-                .eq('contrasena', contrasenaInput) // Filtro adicional de contraseña
+                .eq('contrasena', contrasenaInput)
                 .maybeSingle();
 
             if (error) {
@@ -156,7 +200,6 @@
                 return;
             }
 
-            // Si los datos no coinciden o no existen
             if (!usuarioEncontrado) {
                 alert("❌ Correo o contraseña incorrectos. Verifica tus datos.");
                 btn.disabled = false;
@@ -164,10 +207,74 @@
                 return;
             }
 
-            // Si todo está bien, le permitimos el acceso
             localStorage.setItem('app_movil_correo', correoInput);
             usuarioEmailLogueado = correoInput;
             document.getElementById('pantalla-login').classList.add('hidden');
+            mostrarAppPrincipal();
+        }
+
+        // 🚀 NUEVA FUNCIÓN: Registra un cliente de forma automatizada en Supabase
+        async function registrarUsuarioMovil(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-registro');
+            const nombreInput = document.getElementById('registro-nombre').value.trim();
+            const correoInput = document.getElementById('registro-correo').value.trim().toLowerCase();
+            const contrasenaInput = document.getElementById('registro-contrasena').value.trim();
+
+            if(!nombreInput || !correoInput || !contrasenaInput) return;
+
+            if(contrasenaInput.length < 4) {
+                alert("⚠️ La contraseña debe tener al menos 4 caracteres.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span>Creando cuenta...</span>`;
+
+            // 1. Validamos que el correo no esté tomado en la tabla 'usuarios'
+            let { data: existe, error: errorCheck } = await _supabase
+                .from('usuarios')
+                .select('correo')
+                .eq('correo', correoInput)
+                .maybeSingle();
+
+            if (errorCheck) {
+                console.error(errorCheck);
+                alert("Error al verificar disponibilidad del correo.");
+                btn.disabled = false;
+                btn.innerHTML = `<span>Crear mi Cuenta Gratis</span>`;
+                return;
+            }
+
+            if (existe) {
+                alert("❌ Este correo electrónico ya se encuentra registrado. Intenta iniciar sesión.");
+                btn.disabled = false;
+                btn.innerHTML = `<span>Crear mi Cuenta Gratis</span>`;
+                return;
+            }
+
+            // 2. Si el correo está limpio, insertamos la nueva fila en Supabase
+            let { error: errorInsert } = await _supabase
+                .from('usuarios')
+                .insert([{
+                    nombre: nombreInput,
+                    correo: correoInput,
+                    contrasena: contrasenaInput
+                }]);
+
+            if (errorInsert) {
+                console.error(errorInsert);
+                alert("Error crítico al guardar el usuario en la base de datos.");
+                btn.disabled = false;
+                btn.innerHTML = `<span>Crear mi Cuenta Gratis</span>`;
+                return;
+            }
+
+            // 3. Éxito: Guardamos la sesión local y entramos directo
+            alert(`¡Bienvenido al Club Raíz, ${nombreInput}!\nTu cuenta ha sido creada con éxito.`);
+            localStorage.setItem('app_movil_correo', correoInput);
+            usuarioEmailLogueado = correoInput;
+            document.getElementById('pantalla-registro').classList.add('hidden');
             mostrarAppPrincipal();
         }
 
