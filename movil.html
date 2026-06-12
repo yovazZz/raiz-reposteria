@@ -15,6 +15,7 @@
         body { background-color: #fef5d4; font-family: sans-serif; color: #111; -webkit-tap-highlight-color: transparent; }
         .neo-box { border: 3px solid black; }
         .neo-card { border: 2px solid black; }
+        /* Ocultar barra de scroll para emular una app nativa */
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -101,6 +102,7 @@
     </nav>
 
     <script>
+        // REEMPLAZA CON TUS LLAVES REALES DE SUPABASE
         const SUPABASE_URL = "https://ksxrpcfvnnkjfriolvxs.supabase.co";
         const SUPABASE_KEY = "sb_publishable_UXlc_48QjL-VGyvspecs2w_hbPKq3Il";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -135,7 +137,7 @@
         }
 
         async function obtenerPuntosTotalesNube() {
-            // Conectado directamente a tu tabla 'compras'
+            // Consulta directa a tu tabla 'compras' para mapear los puntos ganados
             let { data: comprasEfectuadas, error } = await _supabase
                 .from('compras')
                 .select('puntos_ganados')
@@ -188,7 +190,11 @@
         }
 
         async function alDetectarCodigoQR(decodedText) {
-            if (html5QrcodeScanner) { await html5QrcodeScanner.stop().catch(e => {}); }
+            // 🛑 Detenemos la cámara primero para evitar bucles repetitivos de lectura
+            if (html5QrcodeScanner) { 
+                await html5QrcodeScanner.stop().catch(e => console.log("Cámara ya liberada")); 
+            }
+            
             const estado = document.getElementById('texto-estado');
             
             try {
@@ -210,13 +216,19 @@
 
                     if (errorBaseDatos) {
                         console.error(errorBaseDatos);
-                        alert("Error al guardar en la tabla compras.");
+                        alert("Error al guardar en la tabla compras de Supabase.");
                         estado.innerHTML = `<span class="text-red-500">Error de guardado</span>`;
                         return;
                     }
                     
                     alert(`¡COMPRA REGISTRADA!\n\nUsuario: ${datosQR.u}\nPuntos acumulados: +${datosQR.p} pts.`);
-                    cambiarPestaña('inicio');
+                    
+                    // 🚀 SOLUCIÓN: Retraso controlado para permitir que la interfaz se refresque e impida congelamientos
+                    setTimeout(() => {
+                        document.getElementById('texto-estado').innerHTML = "Cámara apagada";
+                        cambiarPestaña('inicio');
+                    }, 300);
+
                 } else {
                     alert("QR no reconocido.");
                     estado.innerHTML = `<span class="text-red-500">Código Inválido</span>`;
