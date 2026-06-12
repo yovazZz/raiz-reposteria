@@ -13,67 +13,71 @@
     </script>
     <style>
         body { background-color: #fef5d4; font-family: sans-serif; color: #111; -webkit-tap-highlight-color: transparent; }
-        .neo-box { border: 3px solid black; }
-        .neo-card { border: 2px solid black; }
+        .neo-box { border: 3px solid black; transition: all 0.25s ease; }
+        .neo-card { border: 2px solid black; transition: all 0.2s ease; }
         ::-webkit-scrollbar { display: none; }
+
+        /* Efecto de desvanecimiento dinámico para las pantallas del teléfono */
+        .tab-content { transition: opacity 0.25s ease, transform 0.25s ease; }
+        .tab-hidden { opacity: 0; transform: translateY(8px); pointer-events: none; display: none; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-between pb-24">
+<body class="min-h-screen flex flex-col items-center justify-between pb-24 bg-crema">
 
-    <div id="pantalla-login" class="w-full max-w-md p-6 flex flex-col gap-6 my-auto hidden">
+    <div id="pantalla-login" class="w-full max-w-md p-6 flex flex-col gap-6 my-auto hidden transition-all duration-300">
         <div class="bg-white p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-center">
-            <h1 class="text-3xl font-black uppercase italic tracking-tight mb-2">Raíz Club</h1>
+            <h1 class="text-3xl font-black uppercase italic tracking-tight mb-2 flex items-center justify-center gap-1"><i class="ph ph-cake text-amber-600"></i> Raíz Club</h1>
             <p class="text-xs font-bold text-gray-500 uppercase mb-6">Inicia sesión para ver tus puntos</p>
             
             <form onsubmit="iniciarSesionMovil(event)" class="flex flex-col gap-4 text-left">
                 <div class="flex flex-col gap-1">
                     <label class="text-xs font-black uppercase">Correo Electrónico:</label>
-                    <input type="email" id="login-correo" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="tu@correo.com">
+                    <input type="email" id="login-correo" required class="border-2 border-black p-3 outline-none focus:bg-amber-50 transition-colors font-bold" placeholder="tu@correo.com">
                 </div>
                 
                 <div class="flex flex-col gap-1">
                     <label class="text-xs font-black uppercase">Contraseña:</label>
-                    <input type="password" id="login-contrasena" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="••••••••">
+                    <input type="password" id="login-contrasena" required class="border-2 border-black p-3 outline-none focus:bg-amber-50 transition-colors font-bold" placeholder="••••••••">
                 </div>
 
-                <button type="submit" id="btn-login" class="w-full bg-azulBtn text-white font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mt-2 flex justify-center items-center gap-2">
+                <button type="submit" id="btn-login" class="w-full bg-azulBtn text-white font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:translate-x-0.5 transition-all mt-2 flex justify-center items-center gap-2">
                     <span>Entrar a mi App</span>
                 </button>
             </form>
 
-            <button onclick="mostrarFormularioRegistro()" class="text-xs font-black uppercase text-blue-600 underline mt-6 block mx-auto hover:text-blue-800">
+            <button onclick="mostrarFormularioRegistro()" class="text-xs font-black uppercase text-blue-600 underline mt-6 block mx-auto hover:text-blue-800 transition-colors">
                 ¿No tienes cuenta? Regístrate aquí
             </button>
         </div>
     </div>
 
-    <div id="pantalla-registro" class="w-full max-w-md p-6 flex flex-col gap-6 my-auto hidden">
+    <div id="pantalla-registro" class="w-full max-w-md p-6 flex flex-col gap-6 my-auto hidden transition-all duration-300">
         <div class="bg-white p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-center">
-            <h1 class="text-3xl font-black uppercase italic tracking-tight mb-1">Únete al Club</h1>
-            <p class="text-xs font-bold text-gray-500 uppercase mb-6">Regístrate para comenzar a acumular puntos</p>
+            <h1 class="text-3xl font-black uppercase italic tracking-tight mb-1 text-stone-900">Únete al Club</h1>
+            <p class="text-xs font-bold text-gray-500 uppercase mb-6">Regístrate para acumular puntos por tus dulces</p>
             
             <form onsubmit="registrarUsuarioMovil(event)" class="flex flex-col gap-4 text-left">
                 <div class="flex flex-col gap-1">
-                    <label class="text-xs font-black uppercase">Tu Nombre completo:</label>
-                    <input type="text" id="registro-nombre" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="Ej. Juan Pérez">
+                    <label class="text-xs font-black uppercase">Tu Nombre:</label>
+                    <input type="text" id="registro-nombre" required class="border-2 border-black p-3 outline-none focus:bg-amber-50 transition-colors font-bold" placeholder="Ej. Juan Pérez">
                 </div>
 
                 <div class="flex flex-col gap-1">
                     <label class="text-xs font-black uppercase">Correo Electrónico:</label>
-                    <input type="email" id="registro-correo" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="correo@ejemplo.com">
+                    <input type="email" id="registro-correo" required class="border-2 border-black p-3 outline-none focus:bg-amber-50 transition-colors font-bold" placeholder="correo@ejemplo.com">
                 </div>
                 
                 <div class="flex flex-col gap-1">
-                    <label class="text-xs font-black uppercase">Crea tu Contraseña:</label>
-                    <input type="password" id="registro-contrasena" required class="border-2 border-black p-3 outline-none focus:bg-yellow-50 font-bold" placeholder="Mínimo 4 caracteres">
+                    <label class="text-xs font-black uppercase">Contraseña:</label>
+                    <input type="password" id="registro-contrasena" required class="border-2 border-black p-3 outline-none focus:bg-amber-50 transition-colors font-bold" placeholder="Mínimo 4 caracteres">
                 </div>
 
-                <button type="submit" id="btn-registro" class="w-full bg-verdeLike text-black font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mt-2 flex justify-center items-center gap-2">
+                <button type="submit" id="btn-registro" class="w-full bg-verdeLike text-black font-bold uppercase p-3 border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] active:translate-y-0.5 active:translate-x-0.5 transition-all mt-2 flex justify-center items-center gap-2">
                     <span>Crear mi Cuenta Gratis</span>
                 </button>
             </form>
 
-            <button onclick="mostrarFormularioLogin()" class="text-xs font-black uppercase text-gray-600 underline mt-6 block mx-auto hover:text-black">
+            <button onclick="mostrarFormularioLogin()" class="text-xs font-black uppercase text-gray-600 underline mt-6 block mx-auto hover:text-black transition-colors">
                 ¿Ya tienes cuenta? Inicia sesión
             </button>
         </div>
@@ -82,65 +86,65 @@
     <div id="app-principal" class="w-full max-w-md p-4 flex flex-col gap-6 hidden overflow-y-auto max-h-screen">
         
         <header class="flex items-center justify-between p-2 bg-white neo-card shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] px-4">
-            <div class="font-black uppercase tracking-tighter italic text-lg">Raíz Repostería</div>
-            <button onclick="cerrarSesionMovil()" class="text-red-500 font-bold text-xs uppercase flex items-center gap-1"><i class="ph ph-sign-out"></i> Salir</button>
+            <div class="font-black uppercase tracking-tighter italic text-lg flex items-center gap-1"><i class="ph ph-sparkles text-amber-500"></i> Raíz App</div>
+            <button onclick="cerrarSesionMovil()" class="text-red-500 font-bold text-xs uppercase flex items-center gap-1 hover:bg-red-50 p-1 transition-colors"><i class="ph ph-sign-out"></i> Salir</button>
         </header>
 
-        <div id="tab-inicio-contenido" class="flex flex-col gap-6">
-            <div class="bg-gradient-to-br from-yellow-100 to-orange-100 p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
-                <p class="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Tarjeta de Cliente Frecuente</p>
+        <div id="tab-inicio-contenido" class="tab-content flex flex-col gap-6">
+            <div class="bg-gradient-to-br from-amber-100 to-orange-100 p-6 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden group hover:scale-[1.01]">
+                <p class="text-[10px] font-black uppercase tracking-widest text-orange-800/70 mb-1">Tarjeta de Fidelidad</p>
                 <h2 id="app-usuario-correo" class="text-xs font-bold text-gray-800 uppercase mb-8 truncate">...</h2>
                 
                 <div class="flex items-end justify-between">
                     <div>
-                        <p class="text-[10px] font-black uppercase text-gray-600">Balance Actual</p>
+                        <p class="text-[10px] font-black uppercase text-stone-600">Puntos Disponibles</p>
                         <div class="flex items-baseline gap-1">
-                            <span id="app-puntos-total" class="text-6xl font-black tracking-tighter">0</span>
-                            <span class="text-sm font-black uppercase text-amber-600">Pts</span>
+                            <span id="app-puntos-total" class="text-6xl font-black tracking-tighter transition-all duration-700">0</span>
+                            <span class="text-sm font-black uppercase text-amber-700">Pts</span>
                         </div>
                     </div>
-                    <div class="bg-white p-2 border-2 border-black rounded-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <div class="bg-white p-2 border-2 border-black rounded-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] group-hover:rotate-12 transition-transform duration-300">
                         <i class="ph ph-crown text-3xl text-amber-500"></i>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white p-4 neo-box shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-3">
-                <h3 class="font-black uppercase italic text-sm border-b-2 border-black pb-1 flex items-center gap-1">
-                    <i class="ph ph-clock-counter-clockwise"></i> Mis Compras Recientes
+                <h3 class="font-black uppercase italic text-sm border-b-2 border-black pb-1 flex items-center gap-1 text-stone-800">
+                    <i class="ph ph-hash"></i> Visitas al Obrador
                 </h3>
                 <div id="contenedor-historial" class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
-                    <p class="text-xs text-gray-500 italic text-center py-2">Cargando tus compras...</p>
+                    <p class="text-xs text-stone-400 italic text-center py-2">Consultando tus porciones...</p>
                 </div>
             </div>
         </div>
 
-        <div id="tab-escanear-contenido" class="flex flex-col gap-6 hidden">
+        <div id="tab-escanear-contenido" class="tab-content flex flex-col gap-6 tab-hidden">
             <div class="bg-white p-4 neo-box shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
-                <h3 class="text-center font-black uppercase italic text-sm"><i class="ph ph-scan"></i> Enfoca tu Código QR</h3>
+                <h3 class="text-center font-black uppercase italic text-sm flex items-center justify-center gap-1"><i class="ph ph-scan text-blue-600 animate-pulse"></i> Enfoca el Código de la Caja</h3>
                 
-                <div class="w-full aspect-square bg-black border-2 border-black overflow-hidden relative">
+                <div class="w-full aspect-square bg-stone-900 border-2 border-black overflow-hidden relative shadow-inner">
                     <div id="lector-camara" class="w-full h-full"></div>
                 </div>
 
-                <div id="panel-estado" class="bg-gray-100 border border-black p-3 text-center text-xs font-bold uppercase">
-                    <p id="texto-estado" class="text-gray-600">Cámara apagada</p>
+                <div id="panel-estado" class="bg-stone-50 border border-black p-3 text-center text-xs font-bold uppercase transition-colors duration-300">
+                    <p id="texto-estado" class="text-stone-500">Lente en reposo</p>
                 </div>
 
-                <button onclick="encenderEscanerMovil()" class="w-full bg-azulBtn text-white border-2 border-black py-3 font-bold uppercase text-xs tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                    Iniciar Lente de Cámara
+                <button onclick="encenderEscanerMovil()" class="w-full bg-azulBtn text-white border-2 border-black py-3 font-bold uppercase text-xs tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-blue-600 active:translate-y-0.5 transition-all">
+                    Encender Cámara de Escaneo
                 </button>
             </div>
         </div>
 
     </div>
 
-    <nav id="barra-navegacion" class="fixed bottom-0 left-0 right-0 h-20 bg-white border-t-4 border-black flex justify-around items-center px-4 z-40 max-w-md mx-auto hidden">
-        <button onclick="cambiarPestaña('inicio')" id="btn-tab-inicio" class="flex flex-col items-center justify-center flex-1 h-full text-blue-600">
+    <nav id="barra-navegacion" class="fixed bottom-0 left-0 right-0 h-20 bg-white border-t-4 border-black flex justify-around items-center px-4 z-40 max-w-md mx-auto hidden shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
+        <button onclick="cambiarPestaña('inicio')" id="btn-tab-inicio" class="flex flex-col items-center justify-center flex-1 h-full text-blue-600 transition-all duration-200">
             <i class="ph ph-house-line text-2xl font-bold"></i>
             <span class="text-[10px] font-black uppercase tracking-wider mt-1">Inicio</span>
         </button>
-        <button onclick="cambiarPestaña('escanear')" id="btn-tab-escanear" class="flex flex-col items-center justify-center flex-1 h-full text-gray-400">
+        <button onclick="cambiarPestaña('escanear')" id="btn-tab-escanear" class="flex flex-col items-center justify-center flex-1 h-full text-stone-400 transition-all duration-200">
             <i class="ph ph-qr-code text-2xl"></i>
             <span class="text-[10px] font-black uppercase tracking-wider mt-1">Escanear</span>
         </button>
@@ -156,11 +160,7 @@
 
         window.onload = function() {
             usuarioEmailLogueado = localStorage.getItem('app_movil_correo');
-            if (!usuarioEmailLogueado) {
-                mostrarFormularioLogin();
-            } else {
-                mostrarAppPrincipal();
-            }
+            if (!usuarioEmailLogueado) { mostrarFormularioLogin(); } else { mostrarAppPrincipal(); }
         };
 
         function mostrarFormularioLogin() {
@@ -173,7 +173,6 @@
             document.getElementById('pantalla-registro').classList.remove('hidden');
         }
 
-        // Acceso regular buscando coincidencias exactas de correo y contraseña
         async function iniciarSesionMovil(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-login');
@@ -181,9 +180,7 @@
             const contrasenaInput = document.getElementById('login-contrasena').value.trim();
             
             if(!correoInput || !contrasenaInput) return;
-
-            btn.disabled = true;
-            btn.innerHTML = `<span>Validando...</span>`;
+            btn.disabled = true; btn.innerHTML = `<span>Validando receta...</span>`;
 
             let { data: usuarioEncontrado, error } = await _supabase
                 .from('usuarios')
@@ -192,18 +189,9 @@
                 .eq('contrasena', contrasenaInput)
                 .maybeSingle();
 
-            if (error) {
-                console.error(error);
-                alert("Error de conexión con la base de datos.");
-                btn.disabled = false;
-                btn.innerHTML = `<span>Entrar a mi App</span>`;
-                return;
-            }
-
-            if (!usuarioEncontrado) {
-                alert("❌ Correo o contraseña incorrectos. Verifica tus datos.");
-                btn.disabled = false;
-                btn.innerHTML = `<span>Entrar a mi App</span>`;
+            if (error || !usuarioEncontrado) {
+                alert("❌ Acceso denegado. Revisa los datos de la cuenta.");
+                btn.disabled = false; btn.innerHTML = `<span>Entrar a mi App</span>`;
                 return;
             }
 
@@ -213,7 +201,6 @@
             mostrarAppPrincipal();
         }
 
-        // 🚀 NUEVA FUNCIÓN: Registra un cliente de forma automatizada en Supabase
         async function registrarUsuarioMovil(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-registro');
@@ -222,56 +209,24 @@
             const contrasenaInput = document.getElementById('registro-contrasena').value.trim();
 
             if(!nombreInput || !correoInput || !contrasenaInput) return;
+            if(contrasenaInput.length < 4) { alert("⚠️ Contraseña muy corta."); return; }
 
-            if(contrasenaInput.length < 4) {
-                alert("⚠️ La contraseña debe tener al menos 4 caracteres.");
-                return;
-            }
+            btn.disabled = true; btn.innerHTML = `<span>Horneando cuenta...</span>`;
 
-            btn.disabled = true;
-            btn.innerHTML = `<span>Creando cuenta...</span>`;
-
-            // 1. Validamos que el correo no esté tomado en la tabla 'usuarios'
-            let { data: existe, error: errorCheck } = await _supabase
-                .from('usuarios')
-                .select('correo')
-                .eq('correo', correoInput)
-                .maybeSingle();
-
-            if (errorCheck) {
-                console.error(errorCheck);
-                alert("Error al verificar disponibilidad del correo.");
-                btn.disabled = false;
-                btn.innerHTML = `<span>Crear mi Cuenta Gratis</span>`;
-                return;
-            }
-
+            let { data: existe } = await _supabase.from('usuarios').select('correo').eq('correo', correoInput).maybeSingle();
             if (existe) {
-                alert("❌ Este correo electrónico ya se encuentra registrado. Intenta iniciar sesión.");
-                btn.disabled = false;
-                btn.innerHTML = `<span>Crear mi Cuenta Gratis</span>`;
+                alert("❌ Este correo ya está registrado.");
+                btn.disabled = false; btn.innerHTML = `<span>Crear mi Cuenta Gratis</span>`;
                 return;
             }
 
-            // 2. Si el correo está limpio, insertamos la nueva fila en Supabase
-            let { error: errorInsert } = await _supabase
-                .from('usuarios')
-                .insert([{
-                    nombre: nombreInput,
-                    correo: correoInput,
-                    contrasena: contrasenaInput
-                }]);
-
+            let { error: errorInsert } = await _supabase.from('usuarios').insert([{ nombre: nombreInput, correo: correoInput, contrasena: contrasenaInput }]);
             if (errorInsert) {
-                console.error(errorInsert);
-                alert("Error crítico al guardar el usuario en la base de datos.");
-                btn.disabled = false;
-                btn.innerHTML = `<span>Crear mi Cuenta Gratis</span>`;
-                return;
+                alert("Error al registrar cuenta.");
+                btn.disabled = false; return;
             }
 
-            // 3. Éxito: Guardamos la sesión local y entramos directo
-            alert(`¡Bienvenido al Club Raíz, ${nombreInput}!\nTu cuenta ha sido creada con éxito.`);
+            alert(`¡Cuenta creada!\nBienvenido al Club Raíz, ${nombreInput}.`);
             localStorage.setItem('app_movil_correo', correoInput);
             usuarioEmailLogueado = correoInput;
             document.getElementById('pantalla-registro').classList.add('hidden');
@@ -292,66 +247,66 @@
                 .eq('correo_usuario', usuarioEmailLogueado)
                 .order('id', { ascending: false });
 
-            if (error) { 
-                console.error(error); 
-                document.getElementById('contenedor-historial').innerHTML = `<p class="text-xs text-red-500 font-bold text-center">Error al conectar historial</p>`;
-                return; 
-            }
-            
+            if (error) return;
             let sumaPuntos = 0;
             const contenedorHistorial = document.getElementById('contenedor-historial');
             contenedorHistorial.innerHTML = "";
 
             if (!comprasEfectuadas || comprasEfectuadas.length === 0) {
                 document.getElementById('app-puntos-total').innerText = "0";
-                contenedorHistorial.innerHTML = `<p class="text-xs text-gray-400 italic text-center py-4">Aún no registras compras</p>`;
+                contenedorHistorial.innerHTML = `<p class="text-xs text-stone-400 italic text-center py-4">Aún no se registran postres</p>`;
                 return;
             }
 
             comprasEfectuadas.forEach(fila => {
                 sumaPuntos += (fila.puntos_ganados || 0);
-                
                 contenedorHistorial.innerHTML += `
-                    <div class="border border-black p-2 bg-gray-50 flex flex-col gap-0.5 text-[11px] mb-1 shadow-sm">
-                        <div class="flex justify-between items-center font-black text-gray-500 uppercase text-[9px]">
-                            <span><i class="ph ph-calendar-blank"></i> ${fila.fecha || 'Reciente'}</span>
-                            <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 border border-amber-300 font-black rounded-sm">+${fila.puntos_ganados} PTS</span>
+                    <div class="border border-black p-2 bg-stone-50 flex flex-col gap-0.5 text-[11px] mb-1 shadow-sm transition-transform duration-200 hover:scale-[0.99]">
+                        <div class="flex justify-between items-center font-black text-stone-500 text-[9px] uppercase">
+                            <span><i class="ph ph-calendar-blank"></i> ${fila.fecha || 'Hoy'}</span>
+                            <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 border border-amber-300 rounded-sm">+${fila.puntos_ganados} Pts</span>
                         </div>
-                        <p class="font-bold uppercase text-gray-800 tracking-tight leading-tight mt-0.5">${fila.productos_comprados}</p>
+                        <p class="font-bold text-stone-800 leading-tight mt-0.5 truncate uppercase">${fila.productos_comprados}</p>
                     </div>`;
             });
 
             document.getElementById('app-puntos-total').innerText = sumaPuntos;
         }
 
-        async function cambiarPestaña(destino) {
-            const tabInicioContenido = document.getElementById('tab-inicio-contenido');
-            const tabEscanearContenido = document.getElementById('tab-escanear-contenido');
+        function cambiarPestaña(destino) {
+            const tabInicio = document.getElementById('tab-inicio-contenido');
+            const tabEscanear = document.getElementById('tab-escanear-contenido');
             const btnInicio = document.getElementById('btn-tab-inicio');
             const btnEscanear = document.getElementById('btn-tab-escanear');
 
             if (destino !== 'escanear' && html5QrcodeScanner) {
-                try { await html5QrcodeScanner.stop(); } catch (e) {}
-                html5QrcodeScanner = null; 
-                document.getElementById('texto-estado').innerHTML = "Cámara apagada";
+                try { html5QrcodeScanner.stop(); } catch (e) {}
+                html5QrcodeScanner = null;
+                document.getElementById('texto-estado').innerHTML = "Lente en reposo";
             }
 
             if (destino === 'inicio') {
-                tabInicioContenido.classList.remove('hidden');
-                tabEscanearContenido.classList.add('hidden');
-                btnInicio.className = "flex flex-col items-center justify-center flex-1 h-full text-blue-600";
-                btnEscanear.className = "flex flex-col items-center justify-center flex-1 h-full text-gray-400";
-                await obtenerPuntosTotalesNube();
-            } else if (destino === 'escanear') {
-                tabInicioContenido.classList.add('hidden');
-                tabEscanearContenido.classList.remove('hidden');
-                btnInicio.className = "flex flex-col items-center justify-center flex-1 h-full text-gray-400";
-                btnEscanear.className = "flex flex-col items-center justify-center flex-1 h-full text-blue-600";
+                tabEscanear.classList.add('tab-hidden');
+                setTimeout(() => {
+                    tabEscanear.classList.add('hidden');
+                    tabInicio.classList.remove('hidden', 'tab-hidden');
+                }, 150);
+                btnInicio.className = "flex flex-col items-center justify-center flex-1 h-full text-blue-600 font-bold scale-105";
+                btnEscanear.className = "flex flex-col items-center justify-center flex-1 h-full text-stone-400";
+                obtenerPuntosTotalesNube();
+            } else {
+                tabInicio.classList.add('tab-hidden');
+                setTimeout(() => {
+                    tabInicio.classList.add('hidden');
+                    tabEscanear.classList.remove('hidden', 'tab-hidden');
+                }, 150);
+                btnEscanear.className = "flex flex-col items-center justify-center flex-1 h-full text-blue-600 font-bold scale-105";
+                btnInicio.className = "flex flex-col items-center justify-center flex-1 h-full text-stone-400";
             }
         }
 
         function encenderEscanerMovil() {
-            document.getElementById('texto-estado').innerHTML = `<span class="text-blue-500"><i class="ph ph-camera animate-pulse"></i> Encendiendo lente...</span>`;
+            document.getElementById('texto-estado').innerHTML = `<span class="text-blue-500 font-black"><i class="ph ph-camera animate-pulse"></i> Iniciando visor...</span>`;
             if(html5QrcodeScanner) {
                 html5QrcodeScanner.stop().catch(() => {}).then(() => iniciarInstanciaCamara());
             } else {
@@ -363,66 +318,47 @@
             html5QrcodeScanner = new Html5Qrcode("lector-camara");
             html5QrcodeScanner.start(
                 { facingMode: "environment" }, 
-                { fps: 10, qrbox: { width: 220, height: 220 } },
+                { fps: 12, qrbox: { width: 220, height: 220 } },
                 alDetectarCodigoQR,
                 () => {}
             ).then(() => {
-                document.getElementById('texto-estado').innerHTML = `<span class="text-green-600"><i class="ph ph-unite animate-spin"></i> Lente Activo - Enfoca el QR</span>`;
-            }).catch(err => {
-                document.getElementById('texto-estado').innerHTML = `<span class="text-red-500">Error: Activa los permisos de cámara</span>`;
+                document.getElementById('texto-estado').innerHTML = `<span class="text-green-600 font-black"><i class="ph ph-scan text-sm animate-bounce"></i> Lector listo: Apunta al código</span>`;
+            }).catch(() => {
+                document.getElementById('texto-estado').innerHTML = `<span class="text-red-500">Concede acceso a la cámara</span>`;
             });
         }
 
         async function alDetectarCodigoQR(decodedText) {
-            if (html5QrcodeScanner) { 
-                try { await html5QrcodeScanner.stop(); } catch(e){}
-                html5QrcodeScanner = null;
-            }
-            
+            if (html5QrcodeScanner) { try { await html5QrcodeScanner.stop(); } catch(e){} html5QrcodeScanner = null; }
             const estado = document.getElementById('texto-estado');
             
             try {
                 const datosQR = JSON.parse(decodedText);
-
                 if (datosQR.o === "RAIZ") {
-                    estado.innerHTML = `<span class="text-yellow-600 font-bold"><i class="ph ph-cloud-arrow-up animate-bounce"></i> PROCESANDO COMPRA...</span>`;
-                    
+                    estado.innerHTML = `<span class="text-yellow-600"><i class="ph ph-cookie animate-spin"></i> Guardando dulces...</span>`;
                     let fechaHoy = new Date().toLocaleDateString('es-MX');
 
-                    const { error: errorBaseDatos } = await _supabase.from('compras').insert([{
+                    await _supabase.from('compras').insert([{
                         correo_usuario: usuarioEmailLogueado,
-                        productos_comprados: datosQR.d || "Compra en Sucursal",
+                        productos_comprados: datosQR.d || "Porción Artesanal",
                         total_articulos: datosQR.p,
                         puntos_ganados: datosQR.p,
                         fecha: fechaHoy
                     }]);
-
-                    if (errorBaseDatos) {
-                        console.error(errorBaseDatos);
-                        alert("Error al guardar en la tabla compras de Supabase.");
-                        estado.innerHTML = `<span class="text-red-500">Error de guardado</span>`;
-                        return;
-                    }
                     
-                    alert(`¡COMPRA REGISTRADA!\n\nUsuario: ${usuarioEmailLogueado}\nPuntos acumulados: +${datosQR.p} pts.`);
-                    
-                    document.getElementById('texto-estado').innerHTML = "Cámara apagada";
+                    alert(`✨ ¡Porción Registrada!\n\nSe sumaron +${datosQR.p} puntos a tu cuenta.`);
                     cambiarPestaña('inicio');
-
                 } else {
-                    alert("QR no reconocido.");
-                    estado.innerHTML = `<span class="text-red-500">Código Inválido</span>`;
+                    alert("Código QR no válido en Raíz Repostería.");
+                    cambiarPestaña('inicio');
                 }
             } catch (e) {
-                alert("Formato de QR incorrecto.");
-                estado.innerHTML = `<span class="text-red-500">Error de lectura</span>`;
+                alert("Lectura incorrecta.");
+                cambiarPestaña('inicio');
             }
         }
 
-        function cerrarSesionMovil() {
-            localStorage.removeItem('app_movil_correo');
-            location.reload();
-        }
+        function cerrarSesionMovil() { localStorage.removeItem('app_movil_correo'); location.reload(); }
     </script>
 </body>
 </html>
