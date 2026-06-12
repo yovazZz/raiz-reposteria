@@ -238,53 +238,55 @@
         }
 
         async function alDetectarCodigoQR(decodedText) {
-            // Detenemos el escáner de inmediato para que no lea múltiples veces el mismo QR
-            if (html5QrcodeScanner) { 
-                try { await html5QrcodeScanner.stop(); } catch(e){}
-                html5QrcodeScanner = null;
+    // Detenemos el escáner de inmediato para que no lea múltiples veces el mismo QR
+    if (html5QrcodeScanner) { 
+        try { await html5QrcodeScanner.stop(); } catch(e){}
+        html5QrcodeScanner = null;
+    }
+    
+    const estado = document.getElementById('texto-estado');
+    
+    try {
+        const datosQR = JSON.parse(decodedText);
+
+        if (datosQR.o === "RAIZ") {
+            estado.innerHTML = `<span class="text-yellow-600 font-bold"><i class="ph ph-cloud-arrow-up animate-bounce"></i> PROCESANDO COMPRA...</span>`;
+            
+            let fechaHoy = new Date().toLocaleDateString('es-MX');
+
+            // 🚀 CORRECCIÓN AQUÍ: Cambiamos 'datosQR.u' por 'usuarioEmailLogueado' 
+            // para que los puntos se guarden en el correo de la app del celular.
+            const { error: errorBaseDatos } = await _supabase.from('compras').insert([{
+                correo_usuario: usuarioEmailLogueado, 
+                productos_comprados: datosQR.d || "Compra en Sucursal",
+                total_articulos: datosQR.p,
+                puntos_ganados: datosQR.p,
+                fecha: fechaHoy
+            }]);
+
+            if (errorBaseDatos) {
+                console.error(errorBaseDatos);
+                alert("Error al guardar en la tabla compras de Supabase.");
+                estado.innerHTML = `<span class="text-red-500">Error de guardado</span>`;
+                return;
             }
             
-            const estado = document.getElementById('texto-estado');
+            // Avisamos mostrando los puntos al usuario real
+            alert(`¡COMPRA REGISTRADA!\n\nAsignada a: ${usuarioEmailLogueado}\nPuntos acumulados: +${datosQR.p} pts.`);
             
-            try {
-                const datosQR = JSON.parse(decodedText);
+            // Redirección inmediata y limpia al menú de inicio
+            document.getElementById('texto-estado').innerHTML = "Cámara apagada";
+            cambiarPestaña('inicio');
 
-                if (datosQR.o === "RAIZ") {
-                    estado.innerHTML = `<span class="text-yellow-600 font-bold"><i class="ph ph-cloud-arrow-up animate-bounce"></i> PROCESANDO COMPRA...</span>`;
-                    
-                    let fechaHoy = new Date().toLocaleDateString('es-MX');
-
-                    // Insertamos los datos directamente en la tabla compras de Supabase
-                    const { error: errorBaseDatos } = await _supabase.from('compras').insert([{
-                        correo_usuario: datosQR.u,
-                        productos_comprados: datosQR.d || "Compra en Sucursal",
-                        total_articulos: datosQR.p,
-                        puntos_ganados: datosQR.p,
-                        fecha: fechaHoy
-                    }]);
-
-                    if (errorBaseDatos) {
-                        console.error(errorBaseDatos);
-                        alert("Error al guardar en la tabla compras de Supabase.");
-                        estado.innerHTML = `<span class="text-red-500">Error de guardado</span>`;
-                        return;
-                    }
-                    
-                    alert(`¡COMPRA REGISTRADA!\n\nUsuario: ${datosQR.u}\nPuntos acumulados: +${datosQR.p} pts.`);
-                    
-                    // Redirección inmediata y limpia al menú de inicio
-                    document.getElementById('texto-estado').innerHTML = "Cámara apagada";
-                    cambiarPestaña('inicio');
-
-                } else {
-                    alert("QR no reconocido.");
-                    estado.innerHTML = `<span class="text-red-500">Código Inválido</span>`;
-                }
-            } catch (e) {
-                alert("Formato de QR incorrecto.");
-                estado.innerHTML = `<span class="text-red-500">Error de lectura</span>`;
-            }
+        } else {
+            alert("QR no reconocido.");
+            estado.innerHTML = `<span class="text-red-500">Código Inválido</span>`;
         }
+    } catch (e) {
+        alert("Formato de QR incorrecto.");
+        estado.innerHTML = `<span class="text-red-500">Error de lectura</span>`;
+    }
+}
 
         function cerrarSesionMovil() {
             localStorage.removeItem('app_movil_correo');
