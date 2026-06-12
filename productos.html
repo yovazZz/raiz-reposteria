@@ -220,6 +220,7 @@
 
             const usuarioSesion = JSON.parse(localStorage.getItem('usuario_logueado'));
 
+            // Construcción del objeto de datos
             const datosObj = {
                 origen: "Raiz Repostería",
                 accion: "compra_carrito",
@@ -231,18 +232,18 @@
             const textoQR = JSON.stringify(datosObj);
 
             try {
-                // Instanciar la librería del archivo qrcode.js que creamos en GitHub
+                // Invocamos la clase QRCode del archivo externo qrcode.js
                 var elQR = new QRCode({
-                    width: 180,
-                    height: 180,
-                    typeNumber: 4,
+                    width: 190,
+                    height: 190,
+                    typeNumber: 8, // Subido a nivel 8 para soportar textos muy largos
                     correctLevel: QRCode.CorrectLevel.M
                 });
                 
                 elQR.addData(textoQR);
                 elQR.make();
                 
-                // Pintar el SVG perfecto
+                // Inyectamos el SVG nítido dentro de la caja blanca
                 contenedor.innerHTML = elQR.makeSvg();
             } catch (e) {
                 console.error(e);
