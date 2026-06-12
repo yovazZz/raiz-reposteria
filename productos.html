@@ -121,7 +121,6 @@
             const item = carrito.find(i => i.id === id);
             if (item && item.cantidad >= prod.stock) { alert("Sin stock suficiente en vitrina"); return; }
             
-            // 🚀 CORREGIDO: Eliminamos el texto "Pattern" erróneo que rompía el código aquí
             if (item) {
                 item.cantidad++;
             } else {
@@ -163,6 +162,10 @@
             actualizarInterfazCarrito();
         }
 
+        function limpiarAcentos(texto) {
+            return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
         function abrirModalPago() {
             const modal = document.getElementById('modal-pago-qr');
             modal.classList.remove('hidden');
@@ -175,7 +178,15 @@
             contenedorQR.innerHTML = "";
 
             let totalArticulos = carrito.reduce((sum, item) => sum + item.cantidad, 0);
-            let nombresProductos = carrito.map(i => `${i.nombre} (x${i.cantidad})`).join(", ");
+            
+            // 🚀 OPTIMIZACIÓN DE ESPACIO: Si el carrito tiene más de 3 tipos de productos diferentes y muchas cantidades,
+            // acortamos el texto descriptivo del QR para evitar que rompa el límite físico de la librería.
+            let nombresProductos = "";
+            if (carrito.length > 3) {
+                nombresProductos = `${carrito.length} prod. variados (${totalArticulos} pzas)`;
+            } else {
+                nombresProductos = carrito.map(i => `${limpiarAcentos(i.nombre)} (x${i.cantidad})`).join(", ");
+            }
             
             try {
                 const datosQR = {
@@ -185,11 +196,22 @@
                     d: nombresProductos
                 };
 
-                new QRCode(contenedorQR, { text: JSON.stringify(datosQR), width: 180, height: 180 });
+                // El texto plano que se va a codificar
+                const textoFinalQR = JSON.stringify(datosQR);
+
+                // 🚀 FORZADO DE CAPACIDAD CORRECTA: Pasamos los parámetros correctos a QRCode
+                // Aumentamos el CorrectLevel a "L" (Low) para que requiera menos densidad de pixeles y quepan textos más grandes
+                new QRCode(contenedorQR, {
+                    text: textoFinalQR,
+                    width: 180,
+                    height: 180,
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+
                 document.getElementById("info-pago-qr").innerText = `Total: +${totalArticulos} Puntos para el Cliente`;
             } catch (err) {
                 console.error(err);
-                contenedorQR.innerHTML = `<p class="text-red-500 text-xs font-bold">Error de Renderizado QR</p>`;
+                contenedorQR.innerHTML = `<p class="text-red-500 text-xs font-bold py-16">Error de Renderizado QR</p>`;
             }
         }
 
